@@ -37,27 +37,30 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public void create(MigrationMetaInfo metaInfa) throws IOException {
-        metaInfa.setStatus(PENDING);
-
+    public void create(MigrationMetaInfo metaInfo) throws IOException {
+        metaInfo.setStatus(PENDING);
         documentService.index(cartographerConfiguration.getSchemaIndex(),
-                schemaMigrationDocumentIdProvider.generateDocumentId(metaInfa),
-                getJsonNode(metaInfa));
+                schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
+                getJsonNode(metaInfo));
+    }
+
+    @Override
+    public void success(MigrationMetaInfo metaInfo) throws IOException {
+        metaInfo.setStatus(SUCCESS);
+        documentService.update(cartographerConfiguration.getSchemaIndex(),
+                schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
+                getJsonNode(metaInfo));
+    }
+
+    @Override
+    public void failed(MigrationMetaInfo metaInfo) throws IOException {
+        metaInfo.setStatus(FAILED);
+        documentService.update(cartographerConfiguration.getSchemaIndex(),
+                schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
+                getJsonNode(metaInfo));
     }
 
     private JsonNode getJsonNode(MigrationMetaInfo metaInfa) throws IOException {
         return objectMapper.readTree(objectMapper.writeValueAsBytes(metaInfa));
-    }
-
-    @Override
-    public void success(Migration migDisk) {
-        MigrationMetaInfo metaInfa = migDisk.getMetaInfo();
-        metaInfa.setStatus(SUCCESS);
-    }
-
-    @Override
-    public void failed(Migration migDisk) {
-        MigrationMetaInfo metaInfa = migDisk.getMetaInfo();
-        metaInfa.setStatus(FAILED);
     }
 }

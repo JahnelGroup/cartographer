@@ -11,6 +11,6 @@ public interface SchemaService {
     List<MigrationMetaInfo> fetchMigrations();
 
     void create(MigrationMetaInfo metaInfa) throws IOException;
-    void success(MigrationMetaInfo metaInfa);
-    void failed(MigrationMetaInfo metaInfa);
+    void success(MigrationMetaInfo metaInfa) throws IOException;
+    void failed(MigrationMetaInfo metaInfa) throws IOException;
 }
