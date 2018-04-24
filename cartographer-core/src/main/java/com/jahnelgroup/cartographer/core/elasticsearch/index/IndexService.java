@@ -8,8 +8,9 @@ import java.util.List;
 
 public interface IndexService {
 
-    boolean mappingExists(String index) throws IOException;
+    boolean exists(String index) throws IOException;
     JsonNodeIndex putMapping(Migration migration) throws IOException;
+    JsonNodeIndex putMapping(String index, String mapping) throws IOException;
     JsonNodeIndex findOne(String index);
     List<JsonNodeIndex> list();
     JsonNode delete(String index);

@@ -1,4 +1,4 @@
-package com.jahnelgroup.cartographer.core.http.client;
+package com.jahnelgroup.cartographer.core.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

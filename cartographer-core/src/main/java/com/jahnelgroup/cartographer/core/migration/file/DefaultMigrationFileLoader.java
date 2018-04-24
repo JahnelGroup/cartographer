@@ -24,8 +24,6 @@ public class DefaultMigrationFileLoader implements MigrationFileLoader, Configur
     public List<MigrationFile> fetchMigrations() throws Exception {
         List<MigrationFile> mappings = new ArrayList<>();
 
-        URL[] urls = ((URLClassLoader)ClassLoader.getSystemClassLoader()).getURLs();
-
         for (File file : getResourceFolderFiles(cartographerConfiguration.getMigrationLocation())) {
             String contents = FileUtils.readFileToString(file, Charset.defaultCharset());
             mappings.add(new MigrationFile(file, contents));

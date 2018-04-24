@@ -1,7 +1,7 @@
 package com.jahnelgroup.cartographer.core.elasticsearch.snapshot;
 
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
-import com.jahnelgroup.cartographer.core.http.client.ElasticsearchHttpClient;
+import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

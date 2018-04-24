@@ -3,7 +3,7 @@ package com.jahnelgroup.cartographer.core.elasticsearch.document;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
-import com.jahnelgroup.cartographer.core.http.client.ElasticsearchHttpClient;
+import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.elasticsearch.action.delete.DeleteRequest;

@@ -1,0 +1,1 @@
+Elasticsearch data directory

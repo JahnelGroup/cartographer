@@ -10,7 +10,10 @@ public interface SchemaService {
 
     List<MigrationMetaInfo> fetchMigrations();
 
-    void create(MigrationMetaInfo metaInfa) throws IOException;
+    void create() throws IOException;
+    boolean exists() throws IOException;
+
+    void index(MigrationMetaInfo metaInfa) throws IOException;
     void success(MigrationMetaInfo metaInfa) throws IOException;
     void failed(MigrationMetaInfo metaInfa) throws IOException;
 }

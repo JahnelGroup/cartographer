@@ -11,12 +11,14 @@ import java.util.stream.Collectors;
 public class CartographerConfiguration {
 
     private String protocol = "http";
-    private String clusterNodes = "localhost";
+    private String clusterNodes = "localhost:9200";
     private String migrationLocation = "elasticsearch/mappings";
     private String migrationExtension = "json";
     private boolean takeSnapshot;
 
     private String schemaIndex = "cartographer_schema";
+    private String schemaMappingFile = "schema_mapping.json";
+
     private String snapshotName = "cartographer_snapshot";
     private String elasticsearchListIndexesUri = "/_cat/indices";
 

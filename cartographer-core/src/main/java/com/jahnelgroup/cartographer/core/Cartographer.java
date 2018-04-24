@@ -27,6 +27,8 @@ import com.jahnelgroup.cartographer.core.util.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.client.IndicesClient;
+import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -46,6 +48,9 @@ public class Cartographer {
 
     @Getter @Setter
     private SchemaMigrationDocumentIdGenerator schemaMigrationDocumentIdGenerator = new DefaultSchemaMigrationDocumentIdGenerator();
+
+    @Getter @Setter
+    private SchemaMappingProvider schemaMappingProvider = new DefaultSchemaMappingProvider();
 
     @Getter @Setter
     private JsonNodeToMigrationMetaInfoConverter jsonNodeToMigrationMetaInfoConverter = new DefaultJsonNodeToMigrationMetaInfoConverter();
@@ -83,6 +88,7 @@ public class Cartographer {
                 migrationFileLoader,
                 migrationFilenameParser,
                 schemaMigrationDocumentIdGenerator,
+                schemaMappingProvider,
                 jsonNodeToMigrationMetaInfoConverter,
                 migrationEqualityProvider,
                 checksumProvider,
@@ -91,11 +97,13 @@ public class Cartographer {
                 httpClientProvider,
                 restHighLevelClientProvider);
 
+        RestHighLevelClient restHighLevelClient = restHighLevelClientProvider.restHighLevelClient();
+
         documentService = new DocumentServiceImpl(
                 config,
                 httpClientProvider.httpClient(),
                 objectMapperProvider.objectMapper(),
-                restHighLevelClientProvider.restHighLevelClient());
+                restHighLevelClient);
 
         snapshotService = new SnapshotServiceImpl(
                 config,
@@ -105,12 +113,14 @@ public class Cartographer {
                 config,
                 httpClientProvider.httpClient(),
                 objectMapperProvider.objectMapper(),
-                restHighLevelClientProvider.restHighLevelClient());
+                restHighLevelClient);
 
         schemaService = new SchemaServiceImpl(
                 config,
                 documentService,
+                indexService,
                 schemaMigrationDocumentIdGenerator,
+                schemaMappingProvider,
                 jsonNodeToMigrationMetaInfoConverter,
                 objectMapperProvider.objectMapper());
     }
@@ -145,7 +155,12 @@ public class Cartographer {
         List<Migration> migsOnDisk = loadMigrationsFromDisk();
         if( migsOnDisk.isEmpty() ) return;
 
-        List<MigrationMetaInfo> metaInfoOnES = loadMigrationMetaInfoFromES();
+        List<MigrationMetaInfo> metaInfoOnES = new ArrayList<>();
+        if( schemaService.exists() ){
+            metaInfoOnES = loadMigrationMetaInfoFromES();
+        }else{
+            schemaService.create();
+        }
 
         if( metaInfoOnES.size() > migsOnDisk.size() ){
             throw new CartographerException("OutOfSync: More migrations exist in Elasticsearch than on disk.");
@@ -180,16 +195,16 @@ public class Cartographer {
     private void applyNewMigration(Migration migDisk) throws Exception {
         eventService.raise(new Event(BEFORE_EACH_MIGRATION));
 
-        if( indexService.mappingExists(migDisk.getMetaInfo().getIndex()) ){
+        if( indexService.exists(migDisk.getMetaInfo().getIndex()) ){
             log.debug("Mapping for index {} already exists, will migrate to the new version.",
                     migDisk.getMetaInfo().getIndex());
         }else{
-            log.debug("Mapping for index {} does not exist, will create it.",
+            log.debug("Mapping for index {} does not exist, will index it.",
                     migDisk.getMetaInfo().getIndex());
         }
 
         eventService.raise(new Event(BEFORE_SCHEMA_CREATE));
-        schemaService.create(migDisk.getMetaInfo());
+        schemaService.index(migDisk.getMetaInfo());
         eventService.raise(new Event(AFTER_SCHEMA_CREATE));
 
         try{

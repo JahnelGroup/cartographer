@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentService;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.JsonNodeDocument;
-import com.jahnelgroup.cartographer.core.migration.Migration;
+import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexService;
 import com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.elasticsearch.ElasticsearchStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,9 +23,31 @@ public class SchemaServiceImpl implements SchemaService {
 
     private CartographerConfiguration cartographerConfiguration;
     private DocumentService documentService;
+    private IndexService indexService;
     private SchemaMigrationDocumentIdGenerator schemaMigrationDocumentIdProvider;
+    private SchemaMappingProvider schemaMappingProvider;
     private JsonNodeToMigrationMetaInfoConverter jsonNodeToMigrationMetaInfoConverter;
     private ObjectMapper objectMapper;
+
+    @Override
+    public boolean exists() throws IOException {
+//        try{
+//            documentService.findAll(cartographerConfiguration.getSchemaIndex());
+//            return true;
+//        }catch(ElasticsearchStatusException e){
+//            if( "index_not_found_exception".equals(e.getResourceType()) ){
+//                return false;
+//            }else{
+//                throw e;
+//            }
+//        }
+        return indexService.exists(cartographerConfiguration.getSchemaIndex());
+    }
+
+    @Override
+    public void create() throws IOException {
+        indexService.putMapping(cartographerConfiguration.getSchemaIndex(), schemaMappingProvider.mapping());
+    }
 
     @Override
     public List<MigrationMetaInfo> fetchMigrations() {
@@ -37,7 +60,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public void create(MigrationMetaInfo metaInfo) throws IOException {
+    public void index(MigrationMetaInfo metaInfo) throws IOException {
         metaInfo.setStatus(PENDING);
         documentService.index(cartographerConfiguration.getSchemaIndex(),
                 schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
