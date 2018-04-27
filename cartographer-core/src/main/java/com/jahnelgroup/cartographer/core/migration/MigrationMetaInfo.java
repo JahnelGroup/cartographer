@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 public class MigrationMetaInfo {
 
     public static enum Status {
+        NONE,
         PENDING,
         SUCCESS,
         FAILED
@@ -34,8 +35,9 @@ public class MigrationMetaInfo {
     private String checksum;
 
     @NonNull
-    private ZonedDateTime timestamp;
+    private String timestamp;
 
+    @NonNull
     private Status status;
 
 }

@@ -11,8 +11,8 @@ public interface IndexService {
     boolean exists(String index) throws IOException;
     JsonNodeIndex putMapping(Migration migration) throws IOException;
     JsonNodeIndex putMapping(String index, String mapping) throws IOException;
-    JsonNodeIndex findOne(String index);
-    List<JsonNodeIndex> list();
-    JsonNode delete(String index);
+    JsonNodeIndex findOne(String index) throws IOException;
+    List<JsonNodeIndex> list() throws IOException;
+    JsonNode delete(String index) throws IOException;
 
 }

@@ -14,7 +14,7 @@ import com.jahnelgroup.cartographer.core.elasticsearch.snapshot.SnapshotServiceI
 import com.jahnelgroup.cartographer.core.event.Event;
 import com.jahnelgroup.cartographer.core.event.EventService;
 import com.jahnelgroup.cartographer.core.event.EventServiceImpl;
-import com.jahnelgroup.cartographer.core.http.DefaultHttpClientProvider;
+import com.jahnelgroup.cartographer.core.http.apache.ApacheHttpClientProvider;
 import com.jahnelgroup.cartographer.core.http.HttpClientProvider;
 import com.jahnelgroup.cartographer.core.migration.Migration;
 import com.jahnelgroup.cartographer.core.migration.MigrationFile;
@@ -27,10 +27,10 @@ import com.jahnelgroup.cartographer.core.util.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.File;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,7 +68,7 @@ public class Cartographer {
     private ObjectMapperProvider objectMapperProvider = new DefaultObjectMapperProvider();
 
     @Getter @Setter
-    private HttpClientProvider httpClientProvider = new DefaultHttpClientProvider();
+    private HttpClientProvider httpClientProvider = new ApacheHttpClientProvider();
 
     @Getter @Setter
     private RestHighLevelClientProvider restHighLevelClientProvider = new DefaultRestHighLevelClient();
@@ -170,7 +170,7 @@ public class Cartographer {
             Migration migDisk = migsOnDisk.get(i);
 
             // new migration
-            if( i >= metaInfoOnES.size() - 1){
+            if( i > metaInfoOnES.size() - 1){
                 applyNewMigration(migDisk);
             }
 
@@ -248,7 +248,8 @@ public class Cartographer {
                 migName.getVersion(),
                 migName.getDescription(),
                 checksumProvider.getChecksum(migFile),
-                dateTimeProvider.now()
+                dateTimeProvider.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")),
+                MigrationMetaInfo.Status.NONE
             );
 
             migrations.add(new Migration(migFile, metaInfo));

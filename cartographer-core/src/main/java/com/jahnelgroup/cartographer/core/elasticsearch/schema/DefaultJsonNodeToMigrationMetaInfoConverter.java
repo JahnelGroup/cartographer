@@ -15,7 +15,8 @@ public class DefaultJsonNodeToMigrationMetaInfoConverter implements JsonNodeToMi
                 jsonNode.get("version").intValue(),
                 jsonNode.get("description").textValue(),
                 jsonNode.get("checksum").textValue(),
-                ZonedDateTime.parse(jsonNode.get("timestamp").textValue())
+                jsonNode.get("timestamp").textValue(),
+                MigrationMetaInfo.Status.valueOf(jsonNode.get("status").textValue())
         );
     }
 

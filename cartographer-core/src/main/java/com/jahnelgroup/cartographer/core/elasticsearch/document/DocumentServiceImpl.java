@@ -52,7 +52,7 @@ public class DocumentServiceImpl implements DocumentService {
             final List<JsonNodeDocument> list = Arrays.stream(hits.getHits())
                     .map(SearchHit::getSourceAsString)
                     .map(this::readTree)
-                    .map(node -> new JsonNodeDocument(node, index, node.get("id").asText()))
+                    .map(node -> new JsonNodeDocument(node, index, node.get("documentId").asText()))
                     .collect(Collectors.toList());
             return list;
         } catch(IOException e) {

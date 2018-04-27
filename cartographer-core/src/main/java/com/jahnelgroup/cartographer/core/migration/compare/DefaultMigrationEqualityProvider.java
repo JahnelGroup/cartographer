@@ -9,12 +9,11 @@ public class DefaultMigrationEqualityProvider implements MigrationEqualityProvid
         if( nullChecksFail(m1, m2) ) return false;
 
         return
-            m1.getDocumentId()    .equals(m2.getDocumentId())         &&
-            m1.getChecksum()      .equals(m2.getChecksum())         &&
-            m1.getDescription()   .equals(m2.getDescription())      &&
             m1.getIndex()         .equals(m2.getIndex())            &&
-            m1.getTimestamp()     .equals(m2.getTimestamp())        &&
-            m1.getVersion()       .equals(m2.getVersion())
+            m1.getVersion()       .equals(m2.getVersion())          &&
+            m1.getDescription()   .equals(m2.getDescription())      &&
+            m1.getChecksum()      .equals(m2.getChecksum())         &&
+            m1.getFilename()      .equals(m2.getFilename())
         ;
 
     }

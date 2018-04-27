@@ -31,16 +31,6 @@ public class SchemaServiceImpl implements SchemaService {
 
     @Override
     public boolean exists() throws IOException {
-//        try{
-//            documentService.findAll(cartographerConfiguration.getSchemaIndex());
-//            return true;
-//        }catch(ElasticsearchStatusException e){
-//            if( "index_not_found_exception".equals(e.getResourceType()) ){
-//                return false;
-//            }else{
-//                throw e;
-//            }
-//        }
         return indexService.exists(cartographerConfiguration.getSchemaIndex());
     }
 
@@ -62,6 +52,7 @@ public class SchemaServiceImpl implements SchemaService {
     @Override
     public void index(MigrationMetaInfo metaInfo) throws IOException {
         metaInfo.setStatus(PENDING);
+        metaInfo.setDocumentId(schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo));
         documentService.index(cartographerConfiguration.getSchemaIndex(),
                 schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
                 getJsonNode(metaInfo));

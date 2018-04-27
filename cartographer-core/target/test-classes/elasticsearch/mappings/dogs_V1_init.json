@@ -1,3 +1,6 @@
 {
-  "test": "test"
+  "properties": {
+    "id":           { "type": "integer"  },
+    "name":         { "type": "keyword" }
+  }
 }

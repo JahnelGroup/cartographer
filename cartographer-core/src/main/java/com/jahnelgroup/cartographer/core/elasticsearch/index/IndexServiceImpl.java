@@ -5,19 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
+import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod;
+import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpRequest;
+import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpResponse;
 import com.jahnelgroup.cartographer.core.migration.Migration;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,45 +30,70 @@ public class IndexServiceImpl implements IndexService {
 
     @Override
     public JsonNodeIndex putMapping(Migration migration) throws IOException {
-        String index = migration.getMetaInfo().getIndex();
-        elasticsearchHttpClient.exchange("/" + index, PUT,
-                objectMapper.readTree(migration.getMigrationFile().getContents()));
-        return this.findOne(index);
+        return putMapping(migration.getMetaInfo().getIndex(), migration.getMigrationFile().getContents());
     }
 
     @Override
     public JsonNodeIndex putMapping(String index, String mapping) throws IOException {
-        elasticsearchHttpClient.exchange("/" + index, PUT, objectMapper.readTree(mapping));
+        if( !exists(index) ){
+            createIndex(index);
+        }
+
+        HttpResponse resp = elasticsearchHttpClient.exchange(request(index, PUT, mapping));
+
+        if( resp.status() != 200 ){
+            throw new IOException("Did not successfully put the mapping for index="+index+". received http status code = "
+                    + resp.status() + ", content = " + resp.content());
+        }
+
         return this.findOne(index);
     }
 
-    @Override
-    public boolean exists(String index) throws IOException {
-        try{
-            final QueryBuilder queryBuilder = QueryBuilders.matchAllQuery();
-            final SearchRequest searchRequest = new SearchRequest(index);
-            searchRequest.types(index);
-            final SearchResponse searchResponse = restHighLevelClient.search(searchRequest);
-            return searchResponse.getHits().totalHits > 0L;
-        }catch(ElasticsearchStatusException e){
-            if( RestStatus.NOT_FOUND.equals(e.status()) ){
-                return false;
-            }else{
-                throw e;
-            }
+    private void createIndex(String index) throws IOException {
+        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index ,
+                PUT, ""));
+
+        if( resp.status() != 200 ){
+            throw new IOException("Did not successfully createIndex index="+index+". received http status code = "
+                    + resp.status() + ", content = " + resp.content());
         }
     }
 
     @Override
-    public JsonNodeIndex findOne(String index) {
-        return new JsonNodeIndex(
-                elasticsearchHttpClient.exchange("/" + index, GET, null), index);
+    public boolean exists(String index) throws IOException {
+        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index, GET, null));
+        switch(resp.status()){
+            case 200: return true;
+            case 404: return false;
+            default: throw new IOException("Did not successfully detect the existence of index="+index+". received http status code = "
+                    + resp.status() + ", content = " + resp.content());
+        }
     }
 
     @Override
-    public List<JsonNodeIndex> list() {
-        final JsonNode node = elasticsearchHttpClient.exchange(
-                cartographerConfiguration.getElasticsearchListIndexesUri(), GET, null);
+    public JsonNodeIndex findOne(String index) throws IOException {
+        HttpResponse resp = elasticsearchHttpClient.exchange(request(index, GET, null));
+
+        if( resp.status() != 200 ){
+            throw new IOException("Unable to retrieve index="+index+". http status code = "
+                    + resp.status() + ", content = " + resp.content());
+        }
+
+        return new JsonNodeIndex(objectMapper.readTree(resp.content()), index);
+    }
+
+    @Override
+    public List<JsonNodeIndex> list() throws IOException {
+
+        HttpResponse resp = elasticsearchHttpClient.exchange(request(cartographerConfiguration.getElasticsearchListIndexesUri(),
+                GET, null));
+
+        if( resp.status() != 200 ){
+            throw new IOException("Unable to retrieve list indexes. http status code = "
+                    + resp.status() + ", content = " + resp.content());
+        }
+
+        final JsonNode node = objectMapper.readTree(resp.content());
 
         final List<JsonNodeIndex> toRet = new ArrayList<>();
         if(node.isArray()) {
@@ -85,8 +104,27 @@ public class IndexServiceImpl implements IndexService {
     }
 
     @Override
-    public JsonNode delete(String index) {
-        return elasticsearchHttpClient.exchange("/" + index, DELETE, null);
+    public JsonNode delete(String index) throws IOException {
+        HttpResponse resp = elasticsearchHttpClient.exchange(request(index, DELETE, null));
+
+        if( resp.status() != 200 ){
+            throw new IOException("Unable to delete index="+index+". http status code = "
+                    + resp.status() + ", content = " + resp.content());
+        }
+
+        return objectMapper.readTree(resp.content());
     }
 
+    private HttpRequest request(String index, HttpMethod method, String content){
+        return new HttpRequest(getHost() + "/" + index + "/_mapping/" + index,
+                method, content);
+    }
+
+    private String getHost() {
+        String host = cartographerConfiguration.getClusterNodes();
+        if ( !host.startsWith("http") ){
+            host = "http://" + host;
+        }
+        return host;
+    }
 }
