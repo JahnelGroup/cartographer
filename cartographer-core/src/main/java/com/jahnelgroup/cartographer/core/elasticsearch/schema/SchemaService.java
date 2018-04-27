@@ -13,7 +13,7 @@ public interface SchemaService {
     void create() throws IOException;
     boolean exists() throws IOException;
 
-    void index(MigrationMetaInfo metaInfa) throws IOException;
-    void success(MigrationMetaInfo metaInfa) throws IOException;
-    void failed(MigrationMetaInfo metaInfa) throws IOException;
+    void index(MigrationMetaInfo metaInfa) throws IOException, Exception;
+    void success(MigrationMetaInfo metaInfa) throws IOException, Exception;
+    void failed(MigrationMetaInfo metaInfa) throws IOException, Exception;
 }

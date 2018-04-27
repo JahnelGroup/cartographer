@@ -1,4 +1,4 @@
-package com.jahnelgroup.cartographer.core.elasticsearch.config;
+package com.jahnelgroup.cartographer.core.http.elasticsearch;
 
 import org.elasticsearch.client.RestHighLevelClient;
 

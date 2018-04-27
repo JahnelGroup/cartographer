@@ -1,4 +1,4 @@
-package com.jahnelgroup.cartographer.core.elasticsearch.config;
+package com.jahnelgroup.cartographer.core.http.elasticsearch;
 
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigurationAware;

@@ -2,16 +2,17 @@ package com.jahnelgroup.cartographer.core.elasticsearch.document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jahnelgroup.cartographer.core.CartographerException;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -61,10 +62,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public JsonNodeDocument index(String index, String documentId, JsonNode document) {
+    public JsonNodeDocument index(String index, String documentId, JsonNode document) throws CartographerException{
         try {
             final String jsonString = objectMapper.writeValueAsString(document);
-            restHighLevelClient.index(new IndexRequest(index, index, documentId).source(jsonString, XContentType.JSON));
+            IndexResponse response = restHighLevelClient.index(new IndexRequest(index, index, documentId).source(jsonString, XContentType.JSON));
+            if( response.status().getStatus() != 200 ){
+                throw new CartographerException(index, "unable to index document="+document);
+            }
             return new JsonNodeDocument(document, index, documentId);
         } catch(IOException e) {
             throw new RuntimeException(e);
@@ -72,27 +76,18 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public JsonNodeDocument update(String index, String documentId, JsonNode document) {
+    public JsonNodeDocument update(String index, String documentId, JsonNode document) throws CartographerException {
         try {
             final String jsonString = objectMapper.writeValueAsString(document);
-            restHighLevelClient.update(new UpdateRequest(index, index, documentId).doc(jsonString, XContentType.JSON));
+            UpdateResponse response = restHighLevelClient.update(new UpdateRequest(index, index, documentId).doc(jsonString, XContentType.JSON));
+            if( response.status().getStatus() != 200 ){
+                throw new CartographerException(index, "unable to update document="+document);
+            }
             return new JsonNodeDocument(document, index, documentId);
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
     }
-
-    @Override
-    public JsonNode delete(String index, String documentId) {
-        try {
-            final DeleteResponse response = restHighLevelClient.delete(
-                    new DeleteRequest(index, index, documentId));
-            return objectMapper.convertValue(response, JsonNode.class);
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     private JsonNode readTree(String json) {
         try {

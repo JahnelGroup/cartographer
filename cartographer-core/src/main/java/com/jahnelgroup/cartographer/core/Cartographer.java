@@ -2,8 +2,8 @@ package com.jahnelgroup.cartographer.core;
 
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigUtils;
-import com.jahnelgroup.cartographer.core.elasticsearch.config.DefaultRestHighLevelClient;
-import com.jahnelgroup.cartographer.core.elasticsearch.config.RestHighLevelClientProvider;
+import com.jahnelgroup.cartographer.core.http.elasticsearch.DefaultRestHighLevelClient;
+import com.jahnelgroup.cartographer.core.http.elasticsearch.RestHighLevelClientProvider;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentService;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentServiceImpl;
 import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexService;
@@ -14,8 +14,8 @@ import com.jahnelgroup.cartographer.core.elasticsearch.snapshot.SnapshotServiceI
 import com.jahnelgroup.cartographer.core.event.Event;
 import com.jahnelgroup.cartographer.core.event.EventService;
 import com.jahnelgroup.cartographer.core.event.EventServiceImpl;
-import com.jahnelgroup.cartographer.core.http.apache.ApacheHttpClientProvider;
-import com.jahnelgroup.cartographer.core.http.HttpClientProvider;
+import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
+import com.jahnelgroup.cartographer.core.http.apache.ApacheHttpClient;
 import com.jahnelgroup.cartographer.core.migration.Migration;
 import com.jahnelgroup.cartographer.core.migration.MigrationFile;
 import com.jahnelgroup.cartographer.core.migration.MigrationFilename;
@@ -68,7 +68,7 @@ public class Cartographer {
     private ObjectMapperProvider objectMapperProvider = new DefaultObjectMapperProvider();
 
     @Getter @Setter
-    private HttpClientProvider httpClientProvider = new ApacheHttpClientProvider();
+    private ElasticsearchHttpClient httpClient = new ApacheHttpClient();
 
     @Getter @Setter
     private RestHighLevelClientProvider restHighLevelClientProvider = new DefaultRestHighLevelClient();
@@ -94,24 +94,24 @@ public class Cartographer {
                 checksumProvider,
                 dateTimeProvider,
                 objectMapperProvider,
-                httpClientProvider,
+                httpClient,
                 restHighLevelClientProvider);
 
         RestHighLevelClient restHighLevelClient = restHighLevelClientProvider.restHighLevelClient();
 
         documentService = new DocumentServiceImpl(
                 config,
-                httpClientProvider.httpClient(),
+                httpClient,
                 objectMapperProvider.objectMapper(),
                 restHighLevelClient);
 
         snapshotService = new SnapshotServiceImpl(
                 config,
-                httpClientProvider.httpClient());
+                httpClient);
 
         indexService = new IndexServiceImpl(
                 config,
-                httpClientProvider.httpClient(),
+                httpClient,
                 objectMapperProvider.objectMapper(),
                 restHighLevelClient);
 

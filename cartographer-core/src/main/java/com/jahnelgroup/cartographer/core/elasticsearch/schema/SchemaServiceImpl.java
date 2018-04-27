@@ -50,7 +50,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public void index(MigrationMetaInfo metaInfo) throws IOException {
+    public void index(MigrationMetaInfo metaInfo) throws Exception {
         metaInfo.setStatus(PENDING);
         metaInfo.setDocumentId(schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo));
         documentService.index(cartographerConfiguration.getSchemaIndex(),
@@ -59,7 +59,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public void success(MigrationMetaInfo metaInfo) throws IOException {
+    public void success(MigrationMetaInfo metaInfo) throws Exception {
         metaInfo.setStatus(SUCCESS);
         documentService.update(cartographerConfiguration.getSchemaIndex(),
                 schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
@@ -67,7 +67,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public void failed(MigrationMetaInfo metaInfo) throws IOException {
+    public void failed(MigrationMetaInfo metaInfo) throws Exception {
         metaInfo.setStatus(FAILED);
         documentService.update(cartographerConfiguration.getSchemaIndex(),
                 schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),

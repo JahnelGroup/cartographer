@@ -3,6 +3,7 @@ package com.jahnelgroup.cartographer.core.elasticsearch.index;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.jahnelgroup.cartographer.core.CartographerException;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
 import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod;
@@ -29,12 +30,12 @@ public class IndexServiceImpl implements IndexService {
     private RestHighLevelClient restHighLevelClient;
 
     @Override
-    public JsonNodeIndex putMapping(Migration migration) throws IOException {
+    public JsonNodeIndex putMapping(Migration migration) throws IOException, CartographerException {
         return putMapping(migration.getMetaInfo().getIndex(), migration.getMigrationFile().getContents());
     }
 
     @Override
-    public JsonNodeIndex putMapping(String index, String mapping) throws IOException {
+    public JsonNodeIndex putMapping(String index, String mapping) throws CartographerException, IOException {
         if( !exists(index) ){
             createIndex(index);
         }
@@ -42,7 +43,7 @@ public class IndexServiceImpl implements IndexService {
         HttpResponse resp = elasticsearchHttpClient.exchange(request(index, PUT, mapping));
 
         if( resp.status() != 200 ){
-            throw new IOException("Did not successfully put the mapping for index="+index+". received http status code = "
+            throw new CartographerException(index, "unable to put the mapping. Received http status code = "
                     + resp.status() + ", content = " + resp.content());
         }
 
