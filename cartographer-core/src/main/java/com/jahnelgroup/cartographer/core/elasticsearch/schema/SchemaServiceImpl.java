@@ -2,6 +2,7 @@ package com.jahnelgroup.cartographer.core.elasticsearch.schema;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jahnelgroup.cartographer.core.CartographerException;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentService;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.JsonNodeDocument;
@@ -35,7 +36,7 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public void create() throws IOException {
+    public void createSchemaIndex() throws IOException, CartographerException {
         indexService.putMapping(cartographerConfiguration.getSchemaIndex(), schemaMappingProvider.mapping());
     }
 

@@ -27,7 +27,6 @@ public class IndexServiceImpl implements IndexService {
     private CartographerConfiguration cartographerConfiguration;
     private ElasticsearchHttpClient elasticsearchHttpClient;
     private ObjectMapper objectMapper;
-    private RestHighLevelClient restHighLevelClient;
 
     @Override
     public JsonNodeIndex putMapping(Migration migration) throws IOException, CartographerException {

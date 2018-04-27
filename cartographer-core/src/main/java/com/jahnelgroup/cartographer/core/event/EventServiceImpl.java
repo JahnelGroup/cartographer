@@ -8,7 +8,8 @@ public class EventServiceImpl implements EventService {
     List<EventListener> listeners = new ArrayList<>();
 
     public EventServiceImpl(){
-        this.listeners.add(new LogEventListener());
+        this.listeners.add(new InfoLogEventListener());
+        this.listeners.add(new TraceLogEventListener());
     }
 
     @Override

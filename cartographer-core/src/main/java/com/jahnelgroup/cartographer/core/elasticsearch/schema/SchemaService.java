@@ -1,5 +1,6 @@
 package com.jahnelgroup.cartographer.core.elasticsearch.schema;
 
+import com.jahnelgroup.cartographer.core.CartographerException;
 import com.jahnelgroup.cartographer.core.migration.Migration;
 import com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo;
 
@@ -10,7 +11,7 @@ public interface SchemaService {
 
     List<MigrationMetaInfo> fetchMigrations();
 
-    void create() throws IOException;
+    void createSchemaIndex() throws IOException, CartographerException;
     boolean exists() throws IOException;
 
     void index(MigrationMetaInfo metaInfa) throws IOException, Exception;

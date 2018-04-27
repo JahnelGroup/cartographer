@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 public class DocumentServiceImpl implements DocumentService {
 
     private CartographerConfiguration cartographerConfiguration;
-    private ElasticsearchHttpClient elasticsearchHttpClient;
     private ObjectMapper objectMapper;
     private RestHighLevelClient restHighLevelClient;
 

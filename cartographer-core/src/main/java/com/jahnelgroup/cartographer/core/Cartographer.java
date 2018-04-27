@@ -2,8 +2,6 @@ package com.jahnelgroup.cartographer.core;
 
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigUtils;
-import com.jahnelgroup.cartographer.core.http.elasticsearch.DefaultRestHighLevelClient;
-import com.jahnelgroup.cartographer.core.http.elasticsearch.RestHighLevelClientProvider;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentService;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentServiceImpl;
 import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexService;
@@ -16,6 +14,8 @@ import com.jahnelgroup.cartographer.core.event.EventService;
 import com.jahnelgroup.cartographer.core.event.EventServiceImpl;
 import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
 import com.jahnelgroup.cartographer.core.http.apache.ApacheHttpClient;
+import com.jahnelgroup.cartographer.core.http.elasticsearch.DefaultRestHighLevelClient;
+import com.jahnelgroup.cartographer.core.http.elasticsearch.RestHighLevelClientProvider;
 import com.jahnelgroup.cartographer.core.migration.Migration;
 import com.jahnelgroup.cartographer.core.migration.MigrationFile;
 import com.jahnelgroup.cartographer.core.migration.MigrationFilename;
@@ -23,10 +23,13 @@ import com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo;
 import com.jahnelgroup.cartographer.core.migration.compare.DefaultMigrationEqualityProvider;
 import com.jahnelgroup.cartographer.core.migration.compare.MigrationEqualityProvider;
 import com.jahnelgroup.cartographer.core.migration.file.*;
-import com.jahnelgroup.cartographer.core.util.*;
+import com.jahnelgroup.cartographer.core.util.DateTimeProvider;
+import com.jahnelgroup.cartographer.core.util.DefaultDateTimeProvider;
+import com.jahnelgroup.cartographer.core.util.DefaultObjectMapperProvider;
+import com.jahnelgroup.cartographer.core.util.ObjectMapperProvider;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.File;
@@ -37,7 +40,7 @@ import java.util.stream.Collectors;
 
 import static com.jahnelgroup.cartographer.core.event.Event.Type.*;
 
-@Slf4j
+@Log4j2
 public class Cartographer {
 
     @Getter @Setter
@@ -101,7 +104,6 @@ public class Cartographer {
 
         documentService = new DocumentServiceImpl(
                 config,
-                httpClient,
                 objectMapperProvider.objectMapper(),
                 restHighLevelClient);
 
@@ -112,8 +114,7 @@ public class Cartographer {
         indexService = new IndexServiceImpl(
                 config,
                 httpClient,
-                objectMapperProvider.objectMapper(),
-                restHighLevelClient);
+                objectMapperProvider.objectMapper());
 
         schemaService = new SchemaServiceImpl(
                 config,
@@ -159,7 +160,7 @@ public class Cartographer {
         if( schemaService.exists() ){
             metaInfoOnES = loadMigrationMetaInfoFromES();
         }else{
-            schemaService.create();
+            schemaService.createSchemaIndex();
         }
 
         if( metaInfoOnES.size() > migsOnDisk.size() ){
@@ -169,14 +170,29 @@ public class Cartographer {
         for(int i=0; i<migsOnDisk.size(); i++){
             Migration migDisk = migsOnDisk.get(i);
 
-            // new migration
+            // Apply new migration
             if( i > metaInfoOnES.size() - 1){
-                applyNewMigration(migDisk);
+                try{
+                    eventService.raise(new Event(BEFORE_EACH_MIGRATION).migration(migDisk));
+                    applyNewMigration(migDisk);
+                    eventService.raise(new Event(AFTER_EACH_MIGRATION).migration(migDisk));
+                }catch(Exception e){
+                    eventService.raise(new Event(AFTER_EACH_MIGRATION_ERROR).migration(migDisk));
+                    throw new CartographerException(e);
+                }
             }
 
-            // existing migration
+            // Validate existing migration
             else{
-                validateExistingMigrations(migsOnDisk.get(i).getMetaInfo(), metaInfoOnES.get(i));
+                try{
+                    eventService.raise(new Event(BEFORE_EACH_MIGRATION_VALIDATION).migration(migsOnDisk.get(i)));
+                    validateExistingMigrations(migsOnDisk.get(i).getMetaInfo(), metaInfoOnES.get(i));
+                    eventService.raise(new Event(AFTER_EACH_MIGRATION_VALIDATION).migration(migsOnDisk.get(i)));
+                }catch(Exception e){
+                    eventService.raise(new Event(AFTER_EACH_MIGRATION_VALIDATION_ERROR).migration(migsOnDisk.get(i)).exception(e));
+                    throw new CartographerException(e);
+                }
+
             }
         }
     }
@@ -193,8 +209,6 @@ public class Cartographer {
     }
 
     private void applyNewMigration(Migration migDisk) throws Exception {
-        eventService.raise(new Event(BEFORE_EACH_MIGRATION));
-
         if( indexService.exists(migDisk.getMetaInfo().getIndex()) ){
             log.debug("Mapping for index {} already exists, will migrate to the new version.",
                     migDisk.getMetaInfo().getIndex());
@@ -219,8 +233,6 @@ public class Cartographer {
             eventService.raise(new Event(AFTER_PUT_MAPPING_ERROR));
             throw e;
         }
-
-        eventService.raise(new Event(AFTER_EACH_MIGRATION));
     }
 
     private List<MigrationMetaInfo> loadMigrationMetaInfoFromES() {
