@@ -40,7 +40,7 @@ public class InfoLogEventListener implements EventListener, ConfigurationAware {
                         event.migration().getMetaInfo().getVersion());
                 break;
             case BEFORE_EACH_MIGRATION_VALIDATION:
-                log.info("Validating for index={} file={} version={}",
+                log.info("Validating index={} file={} version={}",
                         event.migration().getMetaInfo().getIndex(),
                         event.migration().getMetaInfo().getFilename(),
                         event.migration().getMetaInfo().getVersion());

@@ -187,29 +187,30 @@ public class Cartographer {
         E(C("MIGRATION", () -> {
             Map<String, SortedSet<Migration>> migsOnDisk = loadMigrationsFromDisk();
             for (Map.Entry<String, SortedSet<Migration>> migs : migsOnDisk.entrySet()) {
-                indexMigration(migs.getValue().toArray(new Migration[migs.getValue().size()]));
+                indexMigration(migs.getKey(), migs.getValue().toArray(new Migration[migs.getValue().size()]));
             }
         }));
     }
 
-    protected void indexMigration(Migration[] migsOnDisk) throws Exception {
+    protected void indexMigration(String index, Migration[] migsOnDisk) throws Exception {
        E(C("INDEX_MIGRATION", () -> {
-           List<MigrationMetaInfo> metaInfoOnES = cartographerService.fetchMigrations();
+           MigrationMetaInfo[] metaInfoOnES = loadMigrationsFromES(index);
 
-           if( metaInfoOnES.size() > migsOnDisk.length ){
-               throw new CartographerException("More migrations exist in Elasticsearch than on disk.");
+           if( metaInfoOnES.length > migsOnDisk.length ){
+               throw new CartographerException("More migrations exist in Elasticsearch="
+                       + metaInfoOnES.length + " than on Disk=" + migsOnDisk.length + " for index="+index);
            }
 
            for(int i=0; i<migsOnDisk.length; i++){
                Migration migDisk = migsOnDisk[i];
 
                // Apply new migration
-               if( i > metaInfoOnES.size() - 1){
+               if( i > metaInfoOnES.length - 1){
                    eachMigration(migDisk);
                }
                // Validate existing migration
                else{
-                   eachMigrationValidation(migsOnDisk[i], metaInfoOnES.get(i));
+                   eachMigrationValidation(migsOnDisk[i], metaInfoOnES[i]);
                }
            }
        }));
@@ -234,7 +235,7 @@ public class Cartographer {
                 log.debug("Mapping for index {} already exists, will migrate to the new version.",
                         migDisk.getMetaInfo().getIndex());
             }else{
-                log.debug("Mapping for index {} does not exist, will index it.",
+                log.debug("Mapping for index {} does not exist, will create it.",
                         migDisk.getMetaInfo().getIndex());
             }
 
@@ -247,6 +248,11 @@ public class Cartographer {
             E(C("UPDATE_SCHEMA", () -> cartographerService.success(migDisk.getMetaInfo())));
 
         }).migration(migDisk));
+    }
+
+    protected MigrationMetaInfo[] loadMigrationsFromES(String index) throws Exception {
+        SortedSet<MigrationMetaInfo> metaInfoOnES = cartographerService.fetchMigrations(index);
+        return metaInfoOnES.toArray(new MigrationMetaInfo[metaInfoOnES.size()]);
     }
 
     protected Map<String, SortedSet<Migration>> loadMigrationsFromDisk() throws Exception {

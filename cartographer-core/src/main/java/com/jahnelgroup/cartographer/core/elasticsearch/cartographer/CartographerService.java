@@ -5,10 +5,11 @@ import com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.SortedSet;
 
 public interface CartographerService {
 
-    List<MigrationMetaInfo> fetchMigrations();
+    SortedSet<MigrationMetaInfo> fetchMigrations(String index);
 
     void createIndex() throws IOException, CartographerException;
     boolean indexExists() throws IOException;

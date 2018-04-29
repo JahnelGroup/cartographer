@@ -8,11 +8,15 @@ import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentService;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.JsonNodeDocument;
 import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexService;
 import com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo;
+import com.jahnelgroup.cartographer.core.migration.compare.DefaultMigrationMetaInfoComparator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo.Status.*;
@@ -45,12 +49,14 @@ public class CartographerServiceImpl implements CartographerService {
     }
 
     @Override
-    public List<MigrationMetaInfo> fetchMigrations() {
+    public SortedSet<MigrationMetaInfo> fetchMigrations(String index) {
+        Supplier<TreeSet<MigrationMetaInfo>> supplier = () -> new TreeSet<>(new DefaultMigrationMetaInfoComparator());
         return documentService.findAll(cartographerConfiguration.getCartographerIndex())
             .stream()
                 .map(JsonNodeDocument::getJsonNode)
                 .map(jsonNodeToMigrationMetaInfoConverter::convert)
-                .collect(Collectors.toList())
+                .filter(mmi -> index.equals(mmi.getIndex()))
+                .collect(Collectors.toCollection(supplier))
             ;
     }
 

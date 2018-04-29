@@ -1,18 +1,11 @@
 package com.jahnelgroup.cartographer.core.migration.file;
 
 import com.jahnelgroup.cartographer.core.migration.Migration;
+import com.jahnelgroup.cartographer.core.migration.compare.DefaultMigrationComparator;
 
 import java.util.*;
 
 public class DefaultMigrationAggregator implements MigrationAggregator {
-
-    class DefaultMigrationComparator implements Comparator<Migration> {
-        @Override
-        public int compare(Migration m1, Migration m2) {
-            return Integer.compare(m1.getMetaInfo().getVersion(),
-                    m2.getMetaInfo().getVersion());
-        }
-    }
 
     @Override
     public Map<String, SortedSet<Migration>> aggregate(List<Migration> migrations) {
