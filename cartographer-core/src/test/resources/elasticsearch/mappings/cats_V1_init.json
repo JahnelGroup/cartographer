@@ -1,0 +1,6 @@
+{
+  "properties": {
+    "id":           { "type": "integer"  },
+    "name":         { "type": "keyword" }
+  }
+}
