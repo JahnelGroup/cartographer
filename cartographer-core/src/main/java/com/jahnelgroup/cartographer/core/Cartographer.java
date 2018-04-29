@@ -33,10 +33,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.File;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.jahnelgroup.cartographer.core.execute.ExecuteContext.C;
@@ -81,17 +78,22 @@ public class Cartographer {
     @Getter @Setter
     private RestHighLevelClientProvider restHighLevelClientProvider = new DefaultRestHighLevelClient();
 
-    private CartographerConfiguration config = new CartographerConfiguration();
+    @Getter @Setter
+    private CartographerConfiguration config;
 
     private DocumentService documentService;
     private SnapshotService snapshotService;
     private IndexService indexService;
     private CartographerService cartographerService;
 
+    public Cartographer() throws Exception {
+        if( config == null ) config = new CartographerConfiguration();
+    }
+
     /**
      * Initialize services and inject configuration into the providers and services.
      */
-    protected void init(){
+    protected void init() {
         ExecuteService.eventService = new EventServiceImpl();
 
         ConfigUtils.injectCartographerConfiguration(config,

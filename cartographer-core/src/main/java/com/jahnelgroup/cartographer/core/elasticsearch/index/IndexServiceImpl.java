@@ -98,7 +98,7 @@ public class IndexServiceImpl implements IndexService {
     @Override
     public List<JsonNodeIndex> list() throws IOException {
 
-        HttpResponse resp = elasticsearchHttpClient.exchange(request(cartographerConfiguration.getElasticsearchListIndexesUri(),
+        HttpResponse resp = elasticsearchHttpClient.exchange(request("/_cat/indices",
                 GET, null));
 
         if( resp.status() != 200 ){
