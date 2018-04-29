@@ -65,7 +65,7 @@ public class DocumentServiceImpl implements DocumentService {
         try {
             final String jsonString = objectMapper.writeValueAsString(document);
             IndexResponse response = restHighLevelClient.index(new IndexRequest(index, index, documentId).source(jsonString, XContentType.JSON));
-            if( response.status().getStatus() != 200 ){
+            if( response.status().getStatus() != 201 ){
                 throw new CartographerException(index, "unable to index document="+document);
             }
             return new JsonNodeDocument(document, index, documentId);

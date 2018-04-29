@@ -60,6 +60,19 @@ public class IndexServiceImpl implements IndexService {
     }
 
     @Override
+    public JsonNode deleteIndex(String index) throws IOException {
+        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index ,
+                DELETE, ""));
+
+        if( resp.status() != 200 ){
+            throw new IOException("Unable to delete index="+index+". http status code = "
+                    + resp.status() + ", content = " + resp.content());
+        }
+
+        return objectMapper.readTree(resp.content());
+    }
+
+    @Override
     public boolean exists(String index) throws IOException {
         HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index, GET, null));
         switch(resp.status()){
@@ -104,11 +117,11 @@ public class IndexServiceImpl implements IndexService {
     }
 
     @Override
-    public JsonNode delete(String index) throws IOException {
+    public JsonNode deleteMapping(String index) throws IOException {
         HttpResponse resp = elasticsearchHttpClient.exchange(request(index, DELETE, null));
 
         if( resp.status() != 200 ){
-            throw new IOException("Unable to delete index="+index+". http status code = "
+            throw new IOException("Unable to delete index="+index+" mapping. http status code = "
                     + resp.status() + ", content = " + resp.content());
         }
 

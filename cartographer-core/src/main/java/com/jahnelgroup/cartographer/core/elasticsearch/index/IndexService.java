@@ -14,6 +14,7 @@ public interface IndexService {
     JsonNodeIndex putMapping(String index, String mapping) throws IOException, CartographerException;
     JsonNodeIndex findOne(String index) throws IOException;
     List<JsonNodeIndex> list() throws IOException;
-    JsonNode delete(String index) throws IOException;
+    JsonNode deleteMapping(String index) throws IOException;
+    JsonNode deleteIndex(String index) throws IOException;
 
 }

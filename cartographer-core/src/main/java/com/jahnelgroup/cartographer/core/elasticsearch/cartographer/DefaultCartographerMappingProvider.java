@@ -1,4 +1,4 @@
-package com.jahnelgroup.cartographer.core.elasticsearch.schema;
+package com.jahnelgroup.cartographer.core.elasticsearch.cartographer;
 
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigurationAware;
@@ -10,14 +10,14 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 @Data
-public class DefaultSchemaMappingProvider implements SchemaMappingProvider, ConfigurationAware {
+public class DefaultCartographerMappingProvider implements CartographerMappingProvider, ConfigurationAware {
 
     private CartographerConfiguration cartographerConfiguration;
 
     @Override
     public String mapping() throws IOException {
         return FileUtils.readFileToString(getResourceFile(
-                cartographerConfiguration.getSchemaMappingFile()),
+                cartographerConfiguration.getCartographerIndexMappingFile()),
                 Charset.defaultCharset());
     }
 

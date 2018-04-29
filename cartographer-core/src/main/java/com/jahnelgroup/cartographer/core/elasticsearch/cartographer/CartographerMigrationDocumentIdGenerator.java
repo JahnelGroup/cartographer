@@ -1,8 +1,8 @@
-package com.jahnelgroup.cartographer.core.elasticsearch.schema;
+package com.jahnelgroup.cartographer.core.elasticsearch.cartographer;
 
 import com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo;
 
-public interface SchemaMigrationDocumentIdGenerator {
+public interface CartographerMigrationDocumentIdGenerator {
 
     String generateDocumentId(MigrationMetaInfo metaInfo);
 

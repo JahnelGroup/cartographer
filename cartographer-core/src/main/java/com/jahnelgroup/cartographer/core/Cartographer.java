@@ -2,15 +2,13 @@ package com.jahnelgroup.cartographer.core;
 
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigUtils;
+import com.jahnelgroup.cartographer.core.elasticsearch.cartographer.*;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentService;
 import com.jahnelgroup.cartographer.core.elasticsearch.document.DocumentServiceImpl;
 import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexService;
 import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexServiceImpl;
-import com.jahnelgroup.cartographer.core.elasticsearch.schema.*;
 import com.jahnelgroup.cartographer.core.elasticsearch.snapshot.SnapshotService;
 import com.jahnelgroup.cartographer.core.elasticsearch.snapshot.SnapshotServiceImpl;
-import com.jahnelgroup.cartographer.core.event.Event;
-import com.jahnelgroup.cartographer.core.event.EventService;
 import com.jahnelgroup.cartographer.core.event.EventServiceImpl;
 import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
 import com.jahnelgroup.cartographer.core.http.apache.ApacheHttpClient;
@@ -27,6 +25,7 @@ import com.jahnelgroup.cartographer.core.util.DateTimeProvider;
 import com.jahnelgroup.cartographer.core.util.DefaultDateTimeProvider;
 import com.jahnelgroup.cartographer.core.util.DefaultObjectMapperProvider;
 import com.jahnelgroup.cartographer.core.util.ObjectMapperProvider;
+import com.jahnelgroup.cartographer.core.execute.ExecuteService;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -36,9 +35,12 @@ import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 import java.util.stream.Collectors;
 
-import static com.jahnelgroup.cartographer.core.event.Event.Type.*;
+import static com.jahnelgroup.cartographer.core.execute.ExecuteContext.C;
+import static com.jahnelgroup.cartographer.core.execute.ExecuteService.E;
 
 @Log4j2
 public class Cartographer {
@@ -47,13 +49,16 @@ public class Cartographer {
     private MigrationFileLoader migrationFileLoader = new DefaultMigrationFileLoader();
 
     @Getter @Setter
+    private MigrationAggregator migrationAggregator = new DefaultMigrationAggregator();
+
+    @Getter @Setter
     private MigrationFilenameParser migrationFilenameParser = new DefaultMigrationFilenameParser();
 
     @Getter @Setter
-    private SchemaMigrationDocumentIdGenerator schemaMigrationDocumentIdGenerator = new DefaultSchemaMigrationDocumentIdGenerator();
+    private CartographerMigrationDocumentIdGenerator cartographerMigrationDocumentIdGenerator = new DefaultCartographerMigrationDocumentIdGenerator();
 
     @Getter @Setter
-    private SchemaMappingProvider schemaMappingProvider = new DefaultSchemaMappingProvider();
+    private CartographerMappingProvider cartographerMappingProvider = new DefaultCartographerMappingProvider();
 
     @Getter @Setter
     private JsonNodeToMigrationMetaInfoConverter jsonNodeToMigrationMetaInfoConverter = new DefaultJsonNodeToMigrationMetaInfoConverter();
@@ -78,20 +83,23 @@ public class Cartographer {
 
     private CartographerConfiguration config = new CartographerConfiguration();
 
-    private EventService eventService;
     private DocumentService documentService;
     private SnapshotService snapshotService;
     private IndexService indexService;
-    private SchemaService schemaService;
+    private CartographerService cartographerService;
 
-    private void init(){
-        eventService = new EventServiceImpl();
+    /**
+     * Initialize services and inject configuration into the providers and services.
+     */
+    protected void init(){
+        ExecuteService.eventService = new EventServiceImpl();
 
         ConfigUtils.injectCartographerConfiguration(config,
+                ExecuteService.eventService,
                 migrationFileLoader,
                 migrationFilenameParser,
-                schemaMigrationDocumentIdGenerator,
-                schemaMappingProvider,
+                cartographerMigrationDocumentIdGenerator,
+                cartographerMappingProvider,
                 jsonNodeToMigrationMetaInfoConverter,
                 migrationEqualityProvider,
                 checksumProvider,
@@ -116,130 +124,132 @@ public class Cartographer {
                 httpClient,
                 objectMapperProvider.objectMapper());
 
-        schemaService = new SchemaServiceImpl(
+        cartographerService = new CartographerServiceImpl(
                 config,
                 documentService,
                 indexService,
-                schemaMigrationDocumentIdGenerator,
-                schemaMappingProvider,
+                cartographerMigrationDocumentIdGenerator,
+                cartographerMappingProvider,
                 jsonNodeToMigrationMetaInfoConverter,
                 objectMapperProvider.objectMapper());
     }
 
-    public void migrate() throws CartographerException {
+    /**
+     * Start auto migration of all indexes.
+     *
+     * @throws Exception
+     */
+    public void migrate() throws Exception {
         init();
+        snapshot();
+        createCartographerIndex();
+        doMigrate();
+    }
 
-        eventService.raise(new Event(BEFORE_MIGRATION));
+    /**
+     * Takes a snapshot if the config property is set.
+     *
+     * @throws Exception
+     */
+    protected void snapshot() throws Exception {
+        if( config.isTakeSnapshot() ){
+            E(C("SNAPSHOT", () -> snapshotService.takeSnapshop()));
+        }
+    }
 
-        try{
-            if( config.isTakeSnapshot() ){
-                try{
-                    eventService.raise(new Event(BEFORE_SNAPSHOT));
-                    snapshotService.takeSnapshop();
-                    eventService.raise(new Event(AFTER_SNAPSHOT));
-                }catch(Exception e){
-                    eventService.raise(new Event(AFTER_SNAPSHOT_ERROR).exception(e));
-                    throw e;
+    /**
+     * Creates Cartographer Index if it doesn't exist.
+     *
+     * @throws Exception
+     */
+    protected void createCartographerIndex() throws Exception {
+        if (config.isClean() ){
+            E(C("CLEAN", () -> {
+                if( cartographerService.indexExists() ){
+                    cartographerService.deleteIndex();
                 }
+            }));
+        }
+
+        E(C("CREATE_SCHEMA", () -> {
+            if( !cartographerService.indexExists() ){
+                cartographerService.createIndex();
+            }
+        }));
+    }
+
+    /**
+     * Performs the actual migration work.
+     *
+     * @throws Exception
+     */
+    protected void doMigrate() throws Exception {
+        E(C("MIGRATION", () -> {
+            Map<String, SortedSet<Migration>> migsOnDisk = loadMigrationsFromDisk();
+            for (Map.Entry<String, SortedSet<Migration>> migs : migsOnDisk.entrySet()) {
+                indexMigration(migs.getValue().toArray(new Migration[migs.getValue().size()]));
+            }
+        }));
+    }
+
+    protected void indexMigration(Migration[] migsOnDisk) throws Exception {
+       E(C("INDEX_MIGRATION", () -> {
+           List<MigrationMetaInfo> metaInfoOnES = cartographerService.fetchMigrations();
+
+           if( metaInfoOnES.size() > migsOnDisk.length ){
+               throw new CartographerException("More migrations exist in Elasticsearch than on disk.");
+           }
+
+           for(int i=0; i<migsOnDisk.length; i++){
+               Migration migDisk = migsOnDisk[i];
+
+               // Apply new migration
+               if( i > metaInfoOnES.size() - 1){
+                   eachMigration(migDisk);
+               }
+               // Validate existing migration
+               else{
+                   eachMigrationValidation(migsOnDisk[i], metaInfoOnES.get(i));
+               }
+           }
+       }));
+    }
+
+    protected void eachMigrationValidation(Migration migrationDisk, MigrationMetaInfo metaOnES) throws Exception {
+        E(C("EACH_MIGRATION_VALIDATION", () -> {
+            if( metaOnES.getStatus() != MigrationMetaInfo.Status.SUCCESS ){
+                throw new CartographerException("Migration validation failed because status is " + metaOnES.getStatus() + " in Elasticsearch.");
             }
 
-            doMigrate();
-        }catch(Exception e){
-            eventService.raise(new Event(AFTER_MIGRATION_ERROR).exception(e));
-            throw new CartographerException(e);
-        }finally{
-            eventService.raise(new Event(AFTER_MIGRATION));
-        }
+            if(!migrationEqualityProvider.migrationsAreEqual(migrationDisk.getMetaInfo(), metaOnES)){
+                throw new CartographerException("Migration validation failed equality migOnDisk="+migrationDisk.getMetaInfo()
+                        +", migOnES="+metaOnES);
+            }
+        }).migration(migrationDisk));
     }
 
-    private void doMigrate() throws Exception {
-        List<Migration> migsOnDisk = loadMigrationsFromDisk();
-        if( migsOnDisk.isEmpty() ) return;
-
-        List<MigrationMetaInfo> metaInfoOnES = new ArrayList<>();
-        if( schemaService.exists() ){
-            metaInfoOnES = loadMigrationMetaInfoFromES();
-        }else{
-            schemaService.createSchemaIndex();
-        }
-
-        if( metaInfoOnES.size() > migsOnDisk.size() ){
-            throw new CartographerException("OutOfSync: More migrations exist in Elasticsearch than on disk.");
-        }
-
-        for(int i=0; i<migsOnDisk.size(); i++){
-            Migration migDisk = migsOnDisk.get(i);
-
-            // Apply new migration
-            if( i > metaInfoOnES.size() - 1){
-                try{
-                    eventService.raise(new Event(BEFORE_EACH_MIGRATION).migration(migDisk));
-                    applyNewMigration(migDisk);
-                    eventService.raise(new Event(AFTER_EACH_MIGRATION).migration(migDisk));
-                }catch(Exception e){
-                    eventService.raise(new Event(AFTER_EACH_MIGRATION_ERROR).migration(migDisk));
-                    throw new CartographerException(e);
-                }
+    protected void eachMigration(Migration migDisk) throws Exception {
+        E(C("EACH_MIGRATION", () -> {
+            if( indexService.exists(migDisk.getMetaInfo().getIndex()) ){
+                log.debug("Mapping for index {} already exists, will migrate to the new version.",
+                        migDisk.getMetaInfo().getIndex());
+            }else{
+                log.debug("Mapping for index {} does not exist, will index it.",
+                        migDisk.getMetaInfo().getIndex());
             }
 
-            // Validate existing migration
-            else{
-                try{
-                    eventService.raise(new Event(BEFORE_EACH_MIGRATION_VALIDATION).migration(migsOnDisk.get(i)));
-                    validateExistingMigrations(migsOnDisk.get(i).getMetaInfo(), metaInfoOnES.get(i));
-                    eventService.raise(new Event(AFTER_EACH_MIGRATION_VALIDATION).migration(migsOnDisk.get(i)));
-                }catch(Exception e){
-                    eventService.raise(new Event(AFTER_EACH_MIGRATION_VALIDATION_ERROR).migration(migsOnDisk.get(i)).exception(e));
-                    throw new CartographerException(e);
-                }
+            // Set
+            E(C("UPDATE_SCHEMA", () -> cartographerService.pending(migDisk.getMetaInfo())));
 
-            }
-        }
+            E(C("PUT_MAPPING", () -> indexService.putMapping(migDisk))
+                .onFailure((e) -> cartographerService.failed(migDisk.getMetaInfo())));
+
+            E(C("UPDATE_SCHEMA", () -> cartographerService.success(migDisk.getMetaInfo())));
+
+        }).migration(migDisk));
     }
 
-    private void validateExistingMigrations(MigrationMetaInfo metaOnDisk, MigrationMetaInfo metaOnES) throws CartographerException {
-        if( metaOnES.getStatus() != MigrationMetaInfo.Status.SUCCESS ){
-            throw new CartographerException("ExistingFailedMigration: Cannot migrate with an existing failed migration. metaOnES="+metaOnES);
-        }
-
-        if(!migrationEqualityProvider.migrationsAreEqual(metaOnDisk, metaOnES)){
-            throw new CartographerException("OutOfSync: Existing migrations don't match up. migOnDisk="+metaOnDisk
-                    +", migOnES="+metaOnES);
-        }
-    }
-
-    private void applyNewMigration(Migration migDisk) throws Exception {
-        if( indexService.exists(migDisk.getMetaInfo().getIndex()) ){
-            log.debug("Mapping for index {} already exists, will migrate to the new version.",
-                    migDisk.getMetaInfo().getIndex());
-        }else{
-            log.debug("Mapping for index {} does not exist, will index it.",
-                    migDisk.getMetaInfo().getIndex());
-        }
-
-        eventService.raise(new Event(BEFORE_SCHEMA_CREATE));
-        schemaService.index(migDisk.getMetaInfo());
-        eventService.raise(new Event(AFTER_SCHEMA_CREATE));
-
-        try{
-            // apply the migration
-            eventService.raise(new Event(BEFORE_PUT_MAPPING));
-            indexService.putMapping(migDisk);
-            schemaService.success(migDisk.getMetaInfo());
-            eventService.raise(new Event(AFTER_PUT_MAPPING));
-
-        }catch(Exception e){
-            schemaService.failed(migDisk.getMetaInfo());
-            eventService.raise(new Event(AFTER_PUT_MAPPING_ERROR));
-            throw e;
-        }
-    }
-
-    private List<MigrationMetaInfo> loadMigrationMetaInfoFromES() {
-        return schemaService.fetchMigrations();
-    }
-
-    private List<Migration> loadMigrationsFromDisk() throws Exception {
+    protected Map<String, SortedSet<Migration>> loadMigrationsFromDisk() throws Exception {
         List<MigrationFile> migFiles = migrationFileLoader.fetchMigrations();
 
         List<MigrationFilename> migNames = migFiles.stream().map(MigrationFile::getFile).map(File::getName)
@@ -248,7 +258,7 @@ public class Cartographer {
         return combine(migFiles, migNames);
     }
 
-    private List<Migration> combine(List<MigrationFile> migFiles, List<MigrationFilename> migNames) throws Exception {
+    protected Map<String, SortedSet<Migration>> combine(List<MigrationFile> migFiles, List<MigrationFilename> migNames) throws Exception {
         List<Migration> migrations = new ArrayList<>();
         for (int i = 0; i < migFiles.size(); i++) {
             MigrationFile migFile = migFiles.get(i);
@@ -266,7 +276,7 @@ public class Cartographer {
 
             migrations.add(new Migration(migFile, metaInfo));
         }
-        return migrations;
+        return migrationAggregator.aggregate(migrations);
     }
 
 
