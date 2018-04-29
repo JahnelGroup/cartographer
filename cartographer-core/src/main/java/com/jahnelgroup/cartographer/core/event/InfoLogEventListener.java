@@ -18,8 +18,12 @@ public class InfoLogEventListener implements EventListener, ConfigurationAware {
             case BEFORE_MIGRATION:
                 log.info("Starting Elasticsearch mapping migrations.");
                 break;
+            case AFTER_CLEAN:
+                log.info("Cleaned cartographer index {} in Elasticsearch.",
+                        cartographerConfiguration.getCartographerIndex());
+                break;
             case AFTER_CREATE_SCHEMA:
-                log.info("Created cartographer schema {} in Elasticsearch.",
+                log.info("Created cartographer index {} in Elasticsearch.",
                         cartographerConfiguration.getCartographerIndex());
                 break;
             case AFTER_CREATE_SCHEMA_ERROR:

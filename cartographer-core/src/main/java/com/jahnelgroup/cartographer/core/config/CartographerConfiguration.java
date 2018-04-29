@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 @Data
 public class CartographerConfiguration {
 
-    private boolean clean = true;
+    private boolean clean = false;
 
     private String protocol = "http";
     private String clusterNodes = "localhost:9200";
