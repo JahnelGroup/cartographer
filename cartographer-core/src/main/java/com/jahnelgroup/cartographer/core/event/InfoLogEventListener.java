@@ -33,11 +33,31 @@ public class InfoLogEventListener implements EventListener, ConfigurationAware {
             case AFTER_MIGRATION:
                 log.info("Success.");
                 break;
+            case BEFORE_EACH_AUTO_REPAIR:
+                log.info("Auto-Repairing index={} file={} version={}",
+                        event.migration().getMetaInfo().getIndex(),
+                        event.migration().getMetaInfo().getFilename(),
+                        event.migration().getMetaInfo().getVersion());
+                break;
+            case AFTER_EACH_AUTO_REPAIR_ERROR:
+                log.info("Error: Auto-Repair failed for index={} file={} version={} reason={}",
+                        event.migration().getMetaInfo().getIndex(),
+                        event.migration().getMetaInfo().getFilename(),
+                        event.migration().getMetaInfo().getVersion(),
+                        event.exception().getMessage());
+                break;
             case BEFORE_EACH_MIGRATION:
                 log.info("Migrating index={} file={} version={}",
                         event.migration().getMetaInfo().getIndex(),
                         event.migration().getMetaInfo().getFilename(),
                         event.migration().getMetaInfo().getVersion());
+                break;
+            case AFTER_EACH_MIGRATION_ERROR:
+                log.info("Error: Migration failed for index={} file={} version={} reason={}",
+                        event.migration().getMetaInfo().getIndex(),
+                        event.migration().getMetaInfo().getFilename(),
+                        event.migration().getMetaInfo().getVersion(),
+                        event.exception().getMessage());
                 break;
             case BEFORE_EACH_MIGRATION_VALIDATION:
                 log.info("Validating index={} file={} version={}",

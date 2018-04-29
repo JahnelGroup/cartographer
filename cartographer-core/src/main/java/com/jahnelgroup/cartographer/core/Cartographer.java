@@ -208,14 +208,35 @@ public class Cartographer {
 
                // Apply new migration
                if( i > metaInfoOnES.length - 1){
-                   eachMigration(migDisk);
+                   eachMigration(migDisk, false);
                }
-               // Validate existing migration
+               // process existing migration
                else{
+                   if( config.isRepair() ){
+                       autoRepair(index, metaInfoOnES, i, migDisk);
+                   }
                    eachMigrationValidation(migsOnDisk[i], metaInfoOnES[i]);
                }
            }
        }));
+    }
+
+    private void autoRepair(String index, MigrationMetaInfo[] metaInfoOnES, int i, Migration migDisk) throws Exception {
+        E(C("EACH_AUTO_REPAIR", () -> {
+            if( metaInfoOnES[i].getStatus() != MigrationMetaInfo.Status.SUCCESS ){
+                eachMigration(migDisk, true); // if no exception was thrown then it should have been inserted
+                // now update the corresponding entry to run through the validation
+                MigrationMetaInfo updatedMMI = cartographerService.fetchMigration(index, migDisk.getMetaInfo().getVersion());
+                if( !updatedMMI.getIndex().equals(metaInfoOnES[i].getIndex()) ||
+                        !updatedMMI.getFilename().equals(metaInfoOnES[i].getFilename()) ||
+                        !updatedMMI.getVersion().equals(metaInfoOnES[i].getVersion()) ){
+                    throw new CartographerException("Something we wrong when attempting to auto repair. updatedMMI="+updatedMMI);
+                }else{
+                    metaInfoOnES[i] = updatedMMI;
+                }
+            }
+        }).migration(migDisk));
+
     }
 
     protected void eachMigrationValidation(Migration migrationDisk, MigrationMetaInfo metaOnES) throws Exception {
@@ -231,7 +252,7 @@ public class Cartographer {
         }).migration(migrationDisk));
     }
 
-    protected void eachMigration(Migration migDisk) throws Exception {
+    protected void eachMigration(Migration migDisk, boolean isRepair) throws Exception {
         E(C("EACH_MIGRATION", () -> {
             if( indexService.exists(migDisk.getMetaInfo().getIndex()) ){
                 log.debug("Mapping for index {} already exists, will migrate to the new version.",
@@ -242,7 +263,7 @@ public class Cartographer {
             }
 
             // Set
-            E(C("UPDATE_SCHEMA", () -> cartographerService.pending(migDisk.getMetaInfo())));
+            E(C("UPDATE_SCHEMA", () -> cartographerService.pending(migDisk.getMetaInfo(), isRepair)));
 
             E(C("PUT_MAPPING", () -> indexService.putMapping(migDisk))
                 .onFailure((e) -> cartographerService.failed(migDisk.getMetaInfo())));

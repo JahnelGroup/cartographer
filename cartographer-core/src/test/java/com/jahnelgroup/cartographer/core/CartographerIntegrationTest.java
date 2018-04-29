@@ -10,6 +10,8 @@ public class CartographerIntegrationTest {
     @Test
     public void test() throws Exception{
         Cartographer cartographer = new Cartographer();
+        //cartographer.getConfig().setClean(true);
+        cartographer.getConfig().setRepair(true);
         cartographer.migrate();
     }
 

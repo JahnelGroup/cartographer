@@ -14,6 +14,7 @@ public class CartographerConfiguration {
     private final static String PREFIX = "cartographer.";
 
     private boolean clean;
+    private boolean repair;
     private boolean takeSnapshot;
 
     private String protocol;
@@ -28,8 +29,9 @@ public class CartographerConfiguration {
 
     public CartographerConfiguration() throws InvalidPropertiesFormatException {
         clean = getBool("clean", false);
-
+        clean = getBool("repair", false);
         takeSnapshot = getBool("snapshot", false);
+
         snapshotName = getString("snapshotName", "cartographer");
 
         protocol = getString("protocol", "http");

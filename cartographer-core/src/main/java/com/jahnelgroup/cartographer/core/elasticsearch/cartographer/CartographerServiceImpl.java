@@ -14,6 +14,7 @@ import lombok.Data;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Supplier;
@@ -61,12 +62,28 @@ public class CartographerServiceImpl implements CartographerService {
     }
 
     @Override
-    public void pending(MigrationMetaInfo metaInfo) throws Exception {
+    public MigrationMetaInfo fetchMigration(String index, Integer version) {
+        Optional<MigrationMetaInfo> entry = fetchMigrations(index).stream().filter(mmi -> version.equals(mmi.getVersion())).findFirst();
+        if( !entry.isPresent() ){
+            throw new RuntimeException("Unable to find migration for index="+index+", version="+version);
+        }
+        return entry.get();
+    }
+
+    @Override
+    public void pending(MigrationMetaInfo metaInfo, boolean isRepair) throws Exception {
         metaInfo.setStatus(PENDING);
         metaInfo.setDocumentId(schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo));
-        documentService.index(cartographerConfiguration.getCartographerIndex(),
-                schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
-                getJsonNode(metaInfo));
+        if( isRepair ){
+            documentService.update(cartographerConfiguration.getCartographerIndex(),
+                    schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
+                    getJsonNode(metaInfo));
+        }else{
+            documentService.index(cartographerConfiguration.getCartographerIndex(),
+                    schemaMigrationDocumentIdProvider.generateDocumentId(metaInfo),
+                    getJsonNode(metaInfo));
+        }
+
     }
 
     @Override
