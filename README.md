@@ -1,5 +1,5 @@
 # Cartographer
-An Elasticsearch mapping migration utility. This project was inspired by all the amazing work done by the [Flyway](https://flywaydb.org/) team for their database migration utility. A very similar migration strategy is provided by Cartographer.
+An Elasticsearch mapping migration utility. This project was inspired by all the amazing work done by the [Flyway](https://flywaydb.org/) team for their database migration utility. A very similar migration strategy for Elasticsearch mappings is provided by Cartographer.
 
 ## Maven and Gradle
 Maven:
