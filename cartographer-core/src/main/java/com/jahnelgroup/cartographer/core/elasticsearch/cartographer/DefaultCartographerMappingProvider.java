@@ -4,9 +4,11 @@ import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigurationAware;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 
 @Data
@@ -16,13 +18,12 @@ public class DefaultCartographerMappingProvider implements CartographerMappingPr
 
     @Override
     public String mapping() throws IOException {
-        return FileUtils.readFileToString(getResourceFile(
-                cartographerConfiguration.getCartographerIndexMappingFile()),
-                Charset.defaultCharset());
+        return IOUtils.toString(getResourceStream(cartographerConfiguration.getCartographerIndexMappingFile()),
+            Charset.defaultCharset());
     }
 
-    private File getResourceFile (String file) {
+    private InputStream getResourceStream (String file) {
         ClassLoader classLoader = getClass().getClassLoader();
-        return new File(classLoader.getResource(file).getFile());
+        return classLoader.getResourceAsStream(file);
     }
 }

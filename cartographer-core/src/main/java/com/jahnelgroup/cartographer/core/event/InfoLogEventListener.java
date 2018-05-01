@@ -31,8 +31,12 @@ public class InfoLogEventListener implements EventListener, ConfigurationAware {
                         cartographerConfiguration.getCartographerIndex());
                 break;
             case AFTER_LOAD_MIGRATIONS_FROM_DISK:
-                log.info("Found {} migrations on disk.",
-                        event.bag().get("size"));
+                int size = (Integer)event.bag().get("size");
+                if( size > 0 ){
+                    log.info("Found {} migrations on disk.", size);
+                }else{
+                    log.info("No migrations were found.");
+                }
                 break;
             case AFTER_LOAD_MIGRATIONS_FROM_ELASTICSEARCH:
                 log.info("Found {} existing migrations in Elasticsearch for index {}.",

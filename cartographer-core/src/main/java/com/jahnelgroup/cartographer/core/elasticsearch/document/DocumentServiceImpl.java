@@ -65,8 +65,9 @@ public class DocumentServiceImpl implements DocumentService {
         try {
             final String jsonString = objectMapper.writeValueAsString(document);
             IndexResponse response = restHighLevelClient.index(new IndexRequest(index, index, documentId).source(jsonString, XContentType.JSON));
-            if( response.status().getStatus() != 201 ){
-                throw new CartographerException(index, "unable to index document="+document);
+            if( response.status().getStatus() != 200 && response.status().getStatus() != 201 ){
+                throw new CartographerException(index, "unable to index document="+document
+                        +". Expected status 200 or 201 but received " + response.status().getStatus());
             }
             return new JsonNodeDocument(document, index, documentId);
         } catch(IOException e) {
@@ -79,8 +80,9 @@ public class DocumentServiceImpl implements DocumentService {
         try {
             final String jsonString = objectMapper.writeValueAsString(document);
             UpdateResponse response = restHighLevelClient.update(new UpdateRequest(index, index, documentId).doc(jsonString, XContentType.JSON));
-            if( response.status().getStatus() != 200 ){
-                throw new CartographerException(index, "unable to update document="+document);
+            if( response.status().getStatus() != 200 && response.status().getStatus() != 201 ){
+                throw new CartographerException(index, "unable to index document="+document
+                        +". Expected status 200 or 201 but received " + response.status().getStatus());
             }
             return new JsonNodeDocument(document, index, documentId);
         } catch(IOException e) {

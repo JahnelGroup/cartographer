@@ -167,19 +167,17 @@ public class Cartographer {
      * @throws Exception
      */
     protected void createCartographerIndex() throws Exception {
-        if (config.isClean() ){
+        if (config.isClean() && cartographerService.indexExists() ){
             E(C("CLEAN", () -> {
-                if( cartographerService.indexExists() ){
-                    cartographerService.deleteIndex();
-                }
+                cartographerService.deleteIndex();
             }));
         }
 
-        E(C("CREATE_SCHEMA", () -> {
-            if( !cartographerService.indexExists() ){
+        if( !cartographerService.indexExists() ){
+            E(C("CREATE_SCHEMA", () -> {
                 cartographerService.createIndex();
-            }
-        }));
+            }));
+        }
     }
 
     /**
@@ -282,10 +280,8 @@ public class Cartographer {
     protected Map<String, SortedSet<Migration>> loadMigrationsFromDisk() throws Exception {
         List<MigrationFile> migFiles = migrationFileLoader.fetchMigrations();
         if( migFiles == null || migFiles.isEmpty() ){
-            log.info("No migrations were found.");
             migFiles = new ArrayList<>();
         }
-
         eventService.raise(new Event(Event.Type.AFTER_LOAD_MIGRATIONS_FROM_DISK).bag("size", migFiles.size()));
 
         if( migFiles.isEmpty() ){
