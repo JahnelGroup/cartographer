@@ -20,7 +20,7 @@ public class CartographerAutoConfiguration {
 
     @Configuration
     @ConditionalOnMissingBean(Cartographer.class)
-    public static class FlywayConfiguration {
+    public static class CartographerConfiguration {
 
         @Bean
         public Cartographer cartographer() throws Exception {
