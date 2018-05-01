@@ -4,17 +4,14 @@ import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigurationAware;
 import com.jahnelgroup.cartographer.core.migration.MigrationFile;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
 @Data
 public class DefaultMigrationFileLoader implements MigrationFileLoader, ConfigurationAware {
 
@@ -38,6 +35,7 @@ public class DefaultMigrationFileLoader implements MigrationFileLoader, Configur
         if( resource == null ){
             return new File[0];
         }
+
         File file = new File(resource.getFile());
         return file.listFiles();
     }

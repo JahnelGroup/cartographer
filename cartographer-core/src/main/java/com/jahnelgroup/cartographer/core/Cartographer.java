@@ -9,6 +9,7 @@ import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexService;
 import com.jahnelgroup.cartographer.core.elasticsearch.index.IndexServiceImpl;
 import com.jahnelgroup.cartographer.core.elasticsearch.snapshot.SnapshotService;
 import com.jahnelgroup.cartographer.core.elasticsearch.snapshot.SnapshotServiceImpl;
+import com.jahnelgroup.cartographer.core.event.Event;
 import com.jahnelgroup.cartographer.core.event.EventServiceImpl;
 import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
 import com.jahnelgroup.cartographer.core.http.apache.ApacheHttpClient;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 
 import static com.jahnelgroup.cartographer.core.execute.ExecuteContext.C;
 import static com.jahnelgroup.cartographer.core.execute.ExecuteService.E;
+import static com.jahnelgroup.cartographer.core.execute.ExecuteService.eventService;
 
 @Log4j2
 public class Cartographer {
@@ -254,12 +256,9 @@ public class Cartographer {
 
     protected void eachMigration(Migration migDisk, boolean isRepair) throws Exception {
         E(C("EACH_MIGRATION", () -> {
-            if( indexService.exists(migDisk.getMetaInfo().getIndex()) ){
-                log.debug("Mapping for index {} already exists, will migrate to the new version.",
-                        migDisk.getMetaInfo().getIndex());
-            }else{
+            if( !indexService.exists(migDisk.getMetaInfo().getIndex()) ){
                 log.debug("Mapping for index {} does not exist, will create it.",
-                        migDisk.getMetaInfo().getIndex());
+                    migDisk.getMetaInfo().getIndex());
             }
 
             // Set
@@ -275,13 +274,21 @@ public class Cartographer {
 
     protected MigrationMetaInfo[] loadMigrationsFromES(String index) throws Exception {
         SortedSet<MigrationMetaInfo> metaInfoOnES = cartographerService.fetchMigrations(index);
-        return metaInfoOnES.toArray(new MigrationMetaInfo[metaInfoOnES.size()]);
+        MigrationMetaInfo[] info = metaInfoOnES.toArray(new MigrationMetaInfo[metaInfoOnES.size()]);
+        eventService.raise(new Event(Event.Type.AFTER_LOAD_MIGRATIONS_FROM_ELASTICSEARCH).bag("size", info.length).bag("index", index));
+        return info;
     }
 
     protected Map<String, SortedSet<Migration>> loadMigrationsFromDisk() throws Exception {
         List<MigrationFile> migFiles = migrationFileLoader.fetchMigrations();
         if( migFiles == null || migFiles.isEmpty() ){
             log.info("No migrations were found.");
+            migFiles = new ArrayList<>();
+        }
+
+        eventService.raise(new Event(Event.Type.AFTER_LOAD_MIGRATIONS_FROM_DISK).bag("size", migFiles.size()));
+
+        if( migFiles.isEmpty() ){
             return new HashMap<>();
         }
 

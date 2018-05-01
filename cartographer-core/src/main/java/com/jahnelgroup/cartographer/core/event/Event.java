@@ -1,10 +1,11 @@
 package com.jahnelgroup.cartographer.core.event;
 
 import com.jahnelgroup.cartographer.core.migration.Migration;
-import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.experimental.Accessors;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @RequiredArgsConstructor
@@ -31,6 +32,9 @@ public class Event {
         BEFORE_SNAPSHOT,
         AFTER_SNAPSHOT,
         AFTER_SNAPSHOT_ERROR,
+
+        AFTER_LOAD_MIGRATIONS_FROM_DISK,
+        AFTER_LOAD_MIGRATIONS_FROM_ELASTICSEARCH,
 
         BEFORE_EACH_MIGRATION,
         AFTER_EACH_MIGRATION,
@@ -60,5 +64,13 @@ public class Event {
     private Migration migration;
 
     private Exception exception;
+
+    @Setter(AccessLevel.NONE)
+    private Map<Object, Object> bag = new HashMap<>();
+
+    public Event bag(Object key, Object value){
+        bag.put(key, value);
+        return this;
+    }
 
 }
