@@ -30,3 +30,89 @@ Validating index=dogs file=dogs_V1_init.json version=1
 Validating index=dogs file=dogs_V2_weightAndType.json version=2
 Success.
 ```
+
+## Cartographer Index
+Cartographer keeps track of migrations in Elasticsearch index. The name is configurable but defaults to **cartographer**.
+
+```json
+{
+    "took": 4,
+    "timed_out": false,
+    "_shards": {
+        "total": 5,
+        "successful": 5,
+        "skipped": 0,
+        "failed": 0
+    },
+    "hits": {
+        "total": 4,
+        "max_score": 1,
+        "hits": [
+            {
+                "_index": "cartographer",
+                "_type": "cartographer",
+                "_id": "cats_1",
+                "_score": 1,
+                "_source": {
+                    "documentId": "cats_1",
+                    "index": "cats",
+                    "filename": "cats_V1_init.json",
+                    "version": 1,
+                    "description": "init",
+                    "checksum": "db95b6e57e1dddca9ca4ef6245535fe7",
+                    "timestamp": "2018-05-01T15:07:05-0500",
+                    "status": "SUCCESS"
+                }
+            },
+            {
+                "_index": "cartographer",
+                "_type": "cartographer",
+                "_id": "dogs_1",
+                "_score": 1,
+                "_source": {
+                    "documentId": "dogs_1",
+                    "index": "dogs",
+                    "filename": "dogs_V1_init.json",
+                    "version": 1,
+                    "description": "init",
+                    "checksum": "f6d5ce918b264cd0bfebad2e31101e63",
+                    "timestamp": "2018-05-01T15:07:05-0500",
+                    "status": "SUCCESS"
+                }
+            },
+            {
+                "_index": "cartographer",
+                "_type": "cartographer",
+                "_id": "cats_2",
+                "_score": 1,
+                "_source": {
+                    "documentId": "cats_2",
+                    "index": "cats",
+                    "filename": "cats_V2_color.json",
+                    "version": 2,
+                    "description": "color",
+                    "checksum": "d3a281bf4805083e93f13f78a143c3f2",
+                    "timestamp": "2018-05-01T15:07:05-0500",
+                    "status": "SUCCESS"
+                }
+            },
+            {
+                "_index": "cartographer",
+                "_type": "cartographer",
+                "_id": "dogs_2",
+                "_score": 1,
+                "_source": {
+                    "documentId": "dogs_2",
+                    "index": "dogs",
+                    "filename": "dogs_V2_weightAndType.json",
+                    "version": 2,
+                    "description": "weightAndType",
+                    "checksum": "5642ed84cbb803d4f50b41c4255fb1fa",
+                    "timestamp": "2018-05-01T15:07:05-0500",
+                    "status": "SUCCESS"
+                }
+            }
+        ]
+    }
+}
+```
