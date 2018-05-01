@@ -280,6 +280,10 @@ public class Cartographer {
 
     protected Map<String, SortedSet<Migration>> loadMigrationsFromDisk() throws Exception {
         List<MigrationFile> migFiles = migrationFileLoader.fetchMigrations();
+        if( migFiles == null || migFiles.isEmpty() ){
+            log.info("No migrations were found.");
+            return new HashMap<>();
+        }
 
         List<MigrationFilename> migNames = migFiles.stream().map(MigrationFile::getFile).map(File::getName)
                 .map(migrationFilenameParser::parse).collect(Collectors.toList());

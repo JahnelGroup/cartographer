@@ -34,7 +34,11 @@ public class DefaultMigrationFileLoader implements MigrationFileLoader, Configur
 
     private File[] getResourceFolderFiles (String folder) {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource(folder).getFile());
+        URL resource = classLoader.getResource(folder);
+        if( resource == null ){
+            return new File[0];
+        }
+        File file = new File(resource.getFile());
         return file.listFiles();
     }
 
