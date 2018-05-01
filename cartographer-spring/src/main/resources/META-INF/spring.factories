@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.jahnelgroup.cartographer.spring.config.CartographerAutoConfiguration
+  com.jahnelgroup.cartographer.spring.autoconfigure.CartographerAutoConfiguration

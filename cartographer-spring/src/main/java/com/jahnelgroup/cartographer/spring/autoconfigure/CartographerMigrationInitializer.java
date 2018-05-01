@@ -1,4 +1,4 @@
-package com.jahnelgroup.cartographer.spring.config;
+package com.jahnelgroup.cartographer.spring.autoconfigure;
 
 import com.jahnelgroup.cartographer.core.Cartographer;
 import org.springframework.beans.factory.InitializingBean;

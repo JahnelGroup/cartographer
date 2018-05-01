@@ -222,8 +222,8 @@ public class Cartographer {
     }
 
     private void autoRepair(String index, MigrationMetaInfo[] metaInfoOnES, int i, Migration migDisk) throws Exception {
-        E(C("EACH_AUTO_REPAIR", () -> {
-            if( metaInfoOnES[i].getStatus() != MigrationMetaInfo.Status.SUCCESS ){
+        if( metaInfoOnES[i].getStatus() != MigrationMetaInfo.Status.SUCCESS ){
+            E(C("EACH_AUTO_REPAIR", () -> {
                 eachMigration(migDisk, true); // if no exception was thrown then it should have been inserted
                 // now update the corresponding entry to run through the validation
                 MigrationMetaInfo updatedMMI = cartographerService.fetchMigration(index, migDisk.getMetaInfo().getVersion());
@@ -234,9 +234,8 @@ public class Cartographer {
                 }else{
                     metaInfoOnES[i] = updatedMMI;
                 }
-            }
-        }).migration(migDisk));
-
+            }).migration(migDisk));
+        }
     }
 
     protected void eachMigrationValidation(Migration migrationDisk, MigrationMetaInfo metaOnES) throws Exception {

@@ -5,7 +5,7 @@
 
 	<groupId>com.jahnelgroup.cartographer</groupId>
 	<artifactId>cartographer-spring</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<packaging>jar</packaging>
 
 	<name>cartographer-spring</name>
@@ -62,12 +62,20 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.jahnelgroup.cartographer</groupId>
 			<artifactId>cartographer-core</artifactId>
-			<version>1.0.1</version>
+			<version>1.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.16.20</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
