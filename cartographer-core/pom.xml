@@ -8,7 +8,7 @@
 	<version>1.0.0</version>
 	<packaging>jar</packaging>
 
-	<name>cartographer</name>
+	<name>cartographer-core</name>
 	<description>An Elasticsearch mapping migration utility.</description>
 	<url>https://github.com/JahnelGroup/cartographer</url>
 
@@ -201,7 +201,7 @@
 					<serverId>ossrh</serverId>
 					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
 					<!-- Set this to true and the release will automatically proceed and sync to Central Repository will follow  -->
-					<autoReleaseAfterClose>false</autoReleaseAfterClose>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
 				</configuration>
 			</plugin>
 		</plugins>
