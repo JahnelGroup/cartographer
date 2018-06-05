@@ -11,7 +11,7 @@ import java.io.File;
 @ToString(exclude = "contents")
 public class MigrationFile {
 
-    private File file;
+    private String filename;
 
     private String contents;
 
