@@ -4,6 +4,7 @@ import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigurationAware;
 import com.jahnelgroup.cartographer.core.migration.MigrationFile;
 import lombok.Data;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -23,6 +24,7 @@ import java.util.List;
 public class DefaultMigrationFileLoader implements MigrationFileLoader, ConfigurationAware {
 
     private CartographerConfiguration cartographerConfiguration;
+    private ChecksumProvider checksumProvider;
 
     @Override
     public List<MigrationFile> fetchMigrations() throws Exception {
@@ -36,7 +38,9 @@ public class DefaultMigrationFileLoader implements MigrationFileLoader, Configur
                 for (Path path : directoryStream) {
                     String filename = cartographerConfiguration.getMigrationLocation() + "/" + path.getFileName();
                     String content = IOUtils.toString(classLoader.getResourceAsStream(filename), Charset.defaultCharset());
-                    mappings.add(new MigrationFile(path.toString(), content));
+                    mappings.add(new MigrationFile(
+                            path.getFileName().toString(),
+                            content));
                 }
             }
         }

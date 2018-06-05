@@ -2,14 +2,14 @@
 <Configuration status="info" name="cartographer">
 
     <Appenders>
-        <Appender type="Console" name="Console">
-            <Layout type="PatternLayout" pattern="%d{dd-MMM-yyyy HH:mm:ss,SSS} %X %t %-5p: %c - %m%n" />
-        </Appender>
+        <Console name="console">
+            <PatternLayout pattern="%d{dd-MMM-yyyy HH:mm:ss,SSS} %X %t %-5p: %c - %m%n" />
+        </Console>
     </Appenders>
 
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Console" />
+            <AppenderRef ref="console" />
         </Root>
     </Loggers>
 
