@@ -287,7 +287,7 @@ public class Cartographer {
             return new HashMap<>();
         }
 
-        List<MigrationFilename> migNames = migFiles.stream().map(MigrationFile::getFile).map(File::getName)
+        List<MigrationFilename> migNames = migFiles.stream().map(MigrationFile::getFilename)
                 .map(migrationFilenameParser::parse).collect(Collectors.toList());
 
         return combine(migFiles, migNames);
@@ -301,7 +301,7 @@ public class Cartographer {
 
             MigrationMetaInfo metaInfo = new MigrationMetaInfo(
                 migName.getIndex(),
-                migFile.getFile().getName(),
+                migFile.getFilename(),
                 migName.getVersion(),
                 migName.getDescription(),
                 checksumProvider.getChecksum(migFile),
