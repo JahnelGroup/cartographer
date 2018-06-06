@@ -7,18 +7,25 @@ import lombok.Data;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.reflections.Reflections;
+import org.reflections.scanners.ResourcesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 @Data
 public class DefaultMigrationFileLoader implements MigrationFileLoader, ConfigurationAware {
@@ -31,18 +38,20 @@ public class DefaultMigrationFileLoader implements MigrationFileLoader, Configur
         List<MigrationFile> mappings = new ArrayList<>();
 
         ClassLoader classLoader = getClass().getClassLoader();
-        URL resource = classLoader.getResource(cartographerConfiguration.getMigrationLocation());
 
-        if( resource != null ){
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(resource.toURI()))) {
-                for (Path path : directoryStream) {
-                    String filename = cartographerConfiguration.getMigrationLocation() + "/" + path.getFileName();
-                    String content = IOUtils.toString(classLoader.getResourceAsStream(filename), Charset.defaultCharset());
-                    mappings.add(new MigrationFile(
-                            path.getFileName().toString(),
-                            content));
-                }
-            }
+        Reflections reflections = new Reflections(
+                new ConfigurationBuilder()
+                    .setUrls(ClasspathHelper.forResource(cartographerConfiguration.getMigrationLocation()))
+                    .setScanners(new ResourcesScanner())
+        );
+
+        Set<String> filenames = reflections.getResources(Pattern.compile(".*\\.json"));
+
+        for(String filename: filenames){
+            String content = IOUtils.toString(classLoader.getResourceAsStream(filename), Charset.defaultCharset());
+            mappings.add(new MigrationFile(
+                    Paths.get(filename).getFileName().toString(),
+                    content));
         }
 
         return mappings;
