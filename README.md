@@ -7,13 +7,13 @@ Maven:
 <dependency>
     <groupId>com.jahnelgroup.cartographer</groupId>
     <artifactId>cartographer-spring</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 </dependency>
 ```
 
 Gradle:
 ```
-compile('com.jahnelgroup.cartographer:cartographer-spring:1.0.3')
+compile('com.jahnelgroup.cartographer:cartographer-spring:1.0.4')
 ```
 
 ## Example Output
