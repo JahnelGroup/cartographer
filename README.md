@@ -1,4 +1,4 @@
-# Cartographer
+![cartographer 1x](https://user-images.githubusercontent.com/26745523/40954629-06db25f6-684b-11e8-99dd-0a1a9aae2a0f.png)
 An Elasticsearch mapping migration utility. This project was inspired by all the amazing work done by the [Flyway](https://flywaydb.org/) team for their database migration utility. A very similar migration strategy for Elasticsearch mappings is provided by Cartographer.
 
 ## Maven and Gradle
@@ -7,13 +7,13 @@ Maven:
 <dependency>
     <groupId>com.jahnelgroup.cartographer</groupId>
     <artifactId>cartographer-spring</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
 Gradle:
 ```
-compile('com.jahnelgroup.cartographer:cartographer-spring:1.0.2')
+compile('com.jahnelgroup.cartographer:cartographer-spring:1.0.3')
 ```
 
 ## Example Output
