@@ -1,11 +1,15 @@
 {
-    "properties": {
-      "id":           { "type": "integer"  },
-      "index":        { "type": "keyword"  },
-      "filename":     { "type": "keyword"  },
-      "version":      { "type": "integer"  },
-      "description":  { "type": "keyword"  },
-      "checksum":     { "type": "keyword"  },
-      "timestamp":    { "type": "date" , "format": "yyyy-MM-dd'T'HH:mm:ssZ" }
+  "mappings": {
+    "cartographer": {
+      "properties": {
+        "id":           { "type": "integer"  },
+        "index":        { "type": "keyword"  },
+        "filename":     { "type": "keyword"  },
+        "version":      { "type": "integer"  },
+        "description":  { "type": "keyword"  },
+        "checksum":     { "type": "keyword"  },
+        "timestamp":    { "type": "date" , "format": "yyyy-MM-dd'T'HH:mm:ssZ" }
+      }
     }
+  }
 }
