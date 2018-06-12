@@ -97,8 +97,8 @@ public class IndexServiceImpl implements IndexService {
     @Override
     public List<JsonNodeIndex> list() throws IOException {
 
-        HttpResponse resp = elasticsearchHttpClient.exchange(request("/_cat/indices",
-                GET, null));
+        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/_cat/indices?format=json",
+            GET, null));
 
         if( resp.status() != 200 ){
             throw new IOException("Unable to retrieve list indexes. http status code = "
