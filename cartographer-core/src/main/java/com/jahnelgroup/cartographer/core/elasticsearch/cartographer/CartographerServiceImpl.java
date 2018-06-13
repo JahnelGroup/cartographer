@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -41,7 +40,7 @@ public class CartographerServiceImpl implements CartographerService {
 
     @Override
     public void createIndex() throws IOException, CartographerException {
-        indexService.putMapping(cartographerConfiguration.getCartographerIndex(), cartographerMappingProvider.mapping());
+        indexService.putIndex(cartographerConfiguration.getCartographerIndex(), cartographerMappingProvider.mapping());
     }
 
     @Override

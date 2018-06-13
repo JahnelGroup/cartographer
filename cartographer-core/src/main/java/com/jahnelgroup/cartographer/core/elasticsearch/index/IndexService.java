@@ -10,8 +10,8 @@ import java.util.List;
 public interface IndexService {
 
     boolean exists(String index) throws IOException;
-    JsonNodeIndex putMapping(Migration migration) throws IOException, CartographerException;
-    JsonNodeIndex putMapping(String index, String mapping) throws IOException, CartographerException;
+    JsonNodeIndex putIndex(Migration migration) throws IOException, CartographerException;
+    JsonNodeIndex putIndex(String index, String mapping) throws IOException, CartographerException;
     JsonNodeIndex findOne(String index) throws IOException;
     List<JsonNodeIndex> list() throws IOException;
     JsonNode deleteMapping(String index) throws IOException;

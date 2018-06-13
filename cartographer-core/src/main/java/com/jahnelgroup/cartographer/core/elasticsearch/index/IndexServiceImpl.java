@@ -12,7 +12,6 @@ import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpRespon
 import com.jahnelgroup.cartographer.core.migration.Migration;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,12 +28,12 @@ public class IndexServiceImpl implements IndexService {
     private ObjectMapper objectMapper;
 
     @Override
-    public JsonNodeIndex putMapping(Migration migration) throws IOException, CartographerException {
-        return putMapping(migration.getMetaInfo().getIndex(), migration.getMigrationFile().getContents());
+    public JsonNodeIndex putIndex(Migration migration) throws IOException, CartographerException {
+        return putIndex(migration.getMetaInfo().getIndex(), migration.getMigrationFile().getContents());
     }
 
     @Override
-    public JsonNodeIndex putMapping(String index, String mapping) throws CartographerException, IOException {
+    public JsonNodeIndex putIndex(String index, String mapping) throws CartographerException, IOException {
         if( !exists(index) ){
             createIndex(index);
         }
@@ -98,8 +97,8 @@ public class IndexServiceImpl implements IndexService {
     @Override
     public List<JsonNodeIndex> list() throws IOException {
 
-        HttpResponse resp = elasticsearchHttpClient.exchange(request("/_cat/indices",
-                GET, null));
+        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/_cat/indices?format=json",
+            GET, null));
 
         if( resp.status() != 200 ){
             throw new IOException("Unable to retrieve list indexes. http status code = "
@@ -129,7 +128,7 @@ public class IndexServiceImpl implements IndexService {
     }
 
     private HttpRequest request(String index, HttpMethod method, String content){
-        return new HttpRequest(getHost() + "/" + index + "/_mapping/" + index,
+        return new HttpRequest(getHost() + "/" + index,
                 method, content);
     }
 

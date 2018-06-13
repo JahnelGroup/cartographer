@@ -32,7 +32,6 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.elasticsearch.client.RestHighLevelClient;
 
-import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -261,7 +260,7 @@ public class Cartographer {
             // Set
             E(C("UPDATE_SCHEMA", () -> cartographerService.pending(migDisk.getMetaInfo(), isRepair)));
 
-            E(C("PUT_MAPPING", () -> indexService.putMapping(migDisk))
+            E(C("PUT_INDEX", () -> indexService.putIndex(migDisk))
                 .onFailure((e) -> cartographerService.failed(migDisk.getMetaInfo())));
 
             E(C("UPDATE_SCHEMA", () -> cartographerService.success(migDisk.getMetaInfo())));
