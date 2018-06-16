@@ -17,7 +17,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.*;
+import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.DELETE;
+import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.GET;
+import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.POST;
+import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.PUT;
 
 @Data
 @AllArgsConstructor
@@ -33,19 +36,66 @@ public class IndexServiceImpl implements IndexService {
     }
 
     @Override
-    public JsonNodeIndex putIndex(String index, String mapping) throws CartographerException, IOException {
+    public JsonNodeIndex putIndex(String index, String content) throws CartographerException, IOException {
         if( !exists(index) ){
             createIndex(index);
         }
 
-        HttpResponse resp = elasticsearchHttpClient.exchange(request(index, PUT, mapping));
+        JsonNode payload = this.objectMapper.readTree(content);
 
-        if( resp.status() != 200 ){
-            throw new CartographerException(index, "unable to put the mapping. Received http status code = "
-                    + resp.status() + ", content = " + resp.content());
+        if (payload.has("settings")) {
+            closeIndex(index);
+            putSettings(index, payload.get("settings").toString());
+            openIndex(index);
+        }
+
+        if (payload.has("mappings") && payload.get("mappings").has(index)) {
+            putMappings(index, payload.get("mappings").get(index).toString());
         }
 
         return this.findOne(index);
+    }
+
+    private void putSettings(String index, String settings) throws CartographerException, IOException {
+
+        HttpResponse settingsResp = elasticsearchHttpClient.exchange(request(index + "/_settings/", PUT, settings));
+
+        if( settingsResp.status() != 200 ){
+            throw new CartographerException(index, "unable to put the settings. Received http status code = "
+                + settingsResp.status() + ", content = " + settingsResp.content());
+        }
+
+    }
+
+    private void putMappings(String index, String mappings) throws CartographerException, IOException {
+
+        HttpResponse resp = elasticsearchHttpClient.exchange(request(index + "/_mappings/" + index, PUT, mappings));
+
+        if( resp.status() != 200 ){
+            throw new CartographerException(index, " unable to put the mapping. Received http status code = "
+                + resp.status() + ", content = " + resp.content());
+        }
+
+    }
+
+    @Override
+    public void closeIndex(String index) throws IOException, CartographerException {
+        HttpResponse resp = elasticsearchHttpClient.exchange(request(index + "/_close/", POST, ""));
+
+        if( resp.status() != 200 ){
+            throw new CartographerException(index, " unable to close the index. Received http status code = "
+                + resp.status() + ", content = " + resp.content());
+        }
+    }
+
+    @Override
+    public void openIndex(String index) throws IOException, CartographerException {
+        HttpResponse resp = elasticsearchHttpClient.exchange(request(index + "/_open/", POST, ""));
+
+        if( resp.status() != 200 ){
+            throw new CartographerException(index, " unable to open the index. Received http status code = "
+                + resp.status() + ", content = " + resp.content());
+        }
     }
 
     private void createIndex(String index) throws IOException {

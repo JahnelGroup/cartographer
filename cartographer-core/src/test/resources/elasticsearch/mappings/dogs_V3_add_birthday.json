@@ -1,8 +1,12 @@
 {
-  "properties": {
-    "id":           { "type": "integer"  },
-    "name":         { "type": "keyword" },
-    "type":         { "type": "keyword" },
-    "birthday":     { "type": "date" , "format": "yyyy-MM-dd" }
+  "mappings": {
+    "dogs": {
+      "properties": {
+        "id":       { "type": "integer" },
+        "name":     { "type": "keyword" },
+        "type":     { "type": "keyword" },
+        "birthday": { "type": "date", "format": "yyyy-MM-dd" }
+      }
+    }
   }
 }

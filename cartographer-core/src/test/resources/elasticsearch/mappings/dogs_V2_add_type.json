@@ -1,7 +1,11 @@
 {
-  "properties": {
-    "id":           { "type": "integer"  },
-    "name":         { "type": "keyword" },
-    "type":         { "type": "keyword" }
+  "mappings": {
+    "dogs": {
+      "properties": {
+        "id":   { "type": "integer" },
+        "name": { "type": "keyword" },
+        "type": { "type": "keyword" }
+      }
+    }
   }
 }

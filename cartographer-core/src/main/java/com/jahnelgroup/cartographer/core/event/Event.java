@@ -17,6 +17,7 @@ public class Event {
         AFTER_MIGRATION,
         AFTER_MIGRATION_ERROR,
 
+
         BEFORE_CLEAN,
         AFTER_CLEAN,
         AFTER_CLEAN_ERROR,
@@ -51,6 +52,10 @@ public class Event {
         BEFORE_UPDATE_SCHEMA,
         AFTER_UPDATE_SCHEMA,
         AFTER_UPDATE_SCHEMA_ERROR,
+
+        BEFORE_PUT_INDEX,
+        AFTER_PUT_INDEX,
+        AFTER_PUT_INDEX_ERROR,
 
         BEFORE_PUT_MAPPING,
         AFTER_PUT_MAPPING,

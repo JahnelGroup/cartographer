@@ -9,7 +9,7 @@ import java.io.IOException;
 public interface ElasticsearchHttpClient {
 
     enum HttpMethod{
-        GET, PUT, DELETE
+        GET, PUT, DELETE, POST
     }
 
     @Data

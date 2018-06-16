@@ -1,7 +1,31 @@
 {
-  "properties": {
-    "id":           { "type": "integer"  },
-    "name":         { "type": "keyword" },
-    "weight":       { "type": "integer" }
+  "settings": {
+    "analysis": {
+      "normalizer": {
+        "lower_case": {
+          "type": "custom",
+          "filter":  [ "lowercase", "asciifolding" ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "cats": {
+      "properties": {
+        "id":   { "type": "integer" },
+
+        "name": {
+          "type": "keyword",
+          "fields": {
+            "lower_case_sort": {
+              "type": "keyword",
+              "normalizer": "lower_case"
+            }
+          }
+        },
+
+        "weight": { "type": "integer" }
+      }
+    }
   }
 }
