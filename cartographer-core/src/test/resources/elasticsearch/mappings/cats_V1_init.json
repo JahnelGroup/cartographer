@@ -1,6 +1,10 @@
 {
-  "properties": {
-    "id":           { "type": "integer"  },
-    "name":         { "type": "keyword" }
+  "mappings": {
+    "cats": {
+      "properties": {
+        "id":     { "type": "integer" },
+        "name":   { "type": "keyword" }
+      }
+    }
   }
 }

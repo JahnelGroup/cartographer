@@ -50,6 +50,8 @@ public class ApacheHttpClient implements ElasticsearchHttpClient {
                 return new HttpPut(url);
             case DELETE:
                 return new HttpDelete(url);
+            case POST:
+                return new HttpPost(url);
         }
         throw new UnsupportedOperationException(String.format("Unsupported httpMethod={}", httpMethod));
     }
