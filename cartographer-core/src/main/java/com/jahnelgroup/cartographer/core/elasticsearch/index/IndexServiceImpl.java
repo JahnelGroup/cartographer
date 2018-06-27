@@ -37,16 +37,10 @@ public class IndexServiceImpl implements IndexService {
 
     @Override
     public JsonNodeIndex putIndex(String index, String content) throws CartographerException, IOException {
-        if( !exists(index) ){
-            createIndex(index);
-        }
-
         JsonNode payload = this.objectMapper.readTree(content);
 
-        if (payload.has("settings")) {
-            closeIndex(index);
-            putSettings(index, payload.get("settings").toString());
-            openIndex(index);
+        if( !exists(index) ){
+            createIndex(index, payload.has("settings") ? payload.get("settings").toString() : "");
         }
 
         if (payload.has("mappings") && payload.get("mappings").has(index)) {
@@ -98,9 +92,10 @@ public class IndexServiceImpl implements IndexService {
         }
     }
 
-    private void createIndex(String index) throws IOException {
+    private void createIndex(String index, String content) throws IOException {
+
         HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index ,
-                PUT, ""));
+            PUT, content));
 
         if( resp.status() != 200 ){
             throw new IOException("Did not successfully createIndex index="+index+". received http status code = "

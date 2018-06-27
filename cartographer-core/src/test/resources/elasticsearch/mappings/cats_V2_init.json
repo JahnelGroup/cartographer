@@ -1,14 +1,4 @@
 {
-  "settings": {
-    "analysis": {
-      "normalizer": {
-        "lower_case": {
-          "type": "custom",
-          "filter":  [ "lowercase", "asciifolding" ]
-        }
-      }
-    }
-  },
   "mappings": {
     "cats": {
       "properties": {
