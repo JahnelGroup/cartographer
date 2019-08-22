@@ -2,7 +2,7 @@ version: "2"
 services:
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.1.0
     restart: always
     network_mode: host
     ports:

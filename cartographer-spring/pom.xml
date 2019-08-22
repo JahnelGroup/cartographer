@@ -26,6 +26,12 @@
 			<organization>Jahnel Group</organization>
 			<organizationUrl>http://www.jahnelgroup.com</organizationUrl>
 		</developer>
+		<developer>
+			<name>Subhrajit Debnath</name>
+			<email>sdebnath@jahnelgroup.com</email>
+			<organization>Jahnel Group</organization>
+			<organizationUrl>http://www.jahnelgroup.com</organizationUrl>
+		</developer>
 	</developers>
 
 	<scm>
@@ -68,13 +74,13 @@
 		<dependency>
 			<groupId>com.jahnelgroup.cartographer</groupId>
 			<artifactId>cartographer-core</artifactId>
-			<version>1.0.6</version>
+			<version>1.0.7</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.16.20</version>
+			<version>1.18.8</version>
 			<scope>provided</scope>
 		</dependency>
 
