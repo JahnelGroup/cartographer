@@ -124,7 +124,7 @@ public class Cartographer {
 
         indexService = new IndexServiceImpl(
                 config,
-                httpClient,
+                restHighLevelClient,
                 objectMapperProvider.objectMapper());
 
         cartographerService = new CartographerServiceImpl(
@@ -260,7 +260,7 @@ public class Cartographer {
             // Set
             E(C("UPDATE_SCHEMA", () -> cartographerService.pending(migDisk.getMetaInfo(), isRepair)));
 
-            E(C("PUT_INDEX", () -> indexService.putIndex(migDisk))
+            E(C("UPSERT_INDEX", () -> indexService.upsertIndex(migDisk))
                 .onFailure((e) -> cartographerService.failed(migDisk.getMetaInfo())));
 
             E(C("UPDATE_SCHEMA", () -> cartographerService.success(migDisk.getMetaInfo())));

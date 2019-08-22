@@ -10,11 +10,9 @@
     }
   },
   "mappings": {
-    "cats": {
-      "properties": {
-        "id":     { "type": "integer" },
-        "name":   { "type": "keyword" }
-      }
+    "properties": {
+      "id":     { "type": "integer" },
+      "name":   { "type": "keyword" }
     }
   }
 }

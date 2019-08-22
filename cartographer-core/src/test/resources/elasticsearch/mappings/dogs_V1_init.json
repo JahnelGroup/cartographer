@@ -1,10 +1,8 @@
 {
   "mappings": {
-    "dogs": {
-      "properties": {
+    "properties": {
         "id":   { "type": "integer" },
         "name": { "type": "keyword" }
       }
-    }
   }
 }

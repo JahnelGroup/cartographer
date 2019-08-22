@@ -40,7 +40,12 @@ public class CartographerServiceImpl implements CartographerService {
 
     @Override
     public void createIndex() throws IOException, CartographerException {
-        indexService.putIndex(cartographerConfiguration.getCartographerIndex(), cartographerMappingProvider.mapping());
+        String contents = cartographerMappingProvider.mapping();
+        JsonNode payload = objectMapper.readTree(contents);
+        String settings = payload.has("settings") ? payload.get("settings").toString() : "";
+        String mappings = payload.has("mappings") ? payload.get("mappings").toString() : "";
+
+        indexService.upsertIndex(cartographerConfiguration.getCartographerIndex(), settings, mappings);
     }
 
     @Override
@@ -101,7 +106,7 @@ public class CartographerServiceImpl implements CartographerService {
                 getJsonNode(metaInfo));
     }
 
-    private JsonNode getJsonNode(MigrationMetaInfo metaInfa) throws IOException {
-        return objectMapper.readTree(objectMapper.writeValueAsBytes(metaInfa));
+    private JsonNode getJsonNode(MigrationMetaInfo metaInfo) throws IOException {
+        return objectMapper.readTree(objectMapper.writeValueAsBytes(metaInfo));
     }
 }

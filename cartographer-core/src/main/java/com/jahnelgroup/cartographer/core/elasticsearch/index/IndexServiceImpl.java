@@ -1,187 +1,191 @@
 package com.jahnelgroup.cartographer.core.elasticsearch.index;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jahnelgroup.cartographer.core.CartographerException;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
-import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient;
-import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod;
-import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpRequest;
-import com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpResponse;
 import com.jahnelgroup.cartographer.core.migration.Migration;
+import com.jahnelgroup.cartographer.core.migration.MigrationContent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.elasticsearch.action.admin.indices.close.CloseIndexRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.open.OpenIndexRequest;
+import org.elasticsearch.action.admin.indices.open.OpenIndexResponse;
+import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.GetIndexResponse;
+import org.elasticsearch.client.indices.PutMappingRequest;
+import org.elasticsearch.common.xcontent.XContentType;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
-import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.DELETE;
-import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.GET;
-import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.POST;
-import static com.jahnelgroup.cartographer.core.http.ElasticsearchHttpClient.HttpMethod.PUT;
+import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
 public class IndexServiceImpl implements IndexService {
 
     private CartographerConfiguration cartographerConfiguration;
-    private ElasticsearchHttpClient elasticsearchHttpClient;
+    private RestHighLevelClient restClient;
     private ObjectMapper objectMapper;
 
     @Override
-    public JsonNodeIndex putIndex(Migration migration) throws IOException, CartographerException {
-        return putIndex(migration.getMetaInfo().getIndex(), migration.getMigrationFile().getContents());
+    public IndexDefinition findOne(String index) throws IOException {
+        GetIndexRequest request = new GetIndexRequest(index);
+        GetIndexResponse response = restClient.indices().get(request, RequestOptions.DEFAULT);
+
+        return new IndexDefinition(index, response);
     }
 
     @Override
-    public JsonNodeIndex putIndex(String index, String content) throws CartographerException, IOException {
-        JsonNode payload = this.objectMapper.readTree(content);
+    public boolean exists(String index) throws IOException {
+        GetIndexRequest request = new GetIndexRequest(index);
 
-        if( !exists(index) ){
-            createIndex(index, payload.has("settings") ? payload.get("settings").toString() : "");
+        return restClient.indices().exists(request, RequestOptions.DEFAULT);
+    }
+
+    @Override
+    public List<IndexDefinition> list(String... indexes) throws IOException {
+        GetIndexRequest request = new GetIndexRequest(indexes);
+        GetIndexResponse response = restClient.indices().get(request, RequestOptions.DEFAULT);
+
+        return Arrays.stream(response.getIndices())
+            .map(index -> new IndexDefinition(index, response))
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<IndexDefinition> list() throws IOException {
+        return list("*");
+    }
+
+    @Override
+    public IndexDefinition createIndex(Migration migration) throws IOException, CartographerException {
+        MigrationContent migrationJSON = migration.toJson(objectMapper);
+
+        return createIndex(migrationJSON.getIndex(), migrationJSON.getSettings(), migrationJSON.getMappings());
+    }
+
+    @Override
+    public IndexDefinition createIndex(String index, String settings, String mappings) throws IOException, CartographerException {
+        CreateIndexRequest request = new CreateIndexRequest(index);
+
+        if (!settings.isEmpty()) {
+            request.settings(settings, XContentType.JSON);
         }
 
-        if (payload.has("mappings") && payload.get("mappings").has(index)) {
-            putMappings(index, payload.get("mappings").get(index).toString());
+        if (!mappings.isEmpty()) {
+            request.mapping(mappings, XContentType.JSON);
+        }
+
+        CreateIndexResponse response = restClient.indices().create(request, RequestOptions.DEFAULT);
+
+        if (!response.isAcknowledged()) {
+            throw new CartographerException("Did not successfully createIndex index=" + index);
         }
 
         return this.findOne(index);
     }
 
-    private void putSettings(String index, String settings) throws CartographerException, IOException {
+    @Override
+    public void openIndex(String index) throws IOException, CartographerException {
+        OpenIndexRequest request = new OpenIndexRequest(index);
 
-        HttpResponse settingsResp = elasticsearchHttpClient.exchange(request(index + "/_settings/", PUT, settings));
+        OpenIndexResponse response = restClient.indices().open(request, RequestOptions.DEFAULT);
 
-        if( settingsResp.status() != 200 ){
-            throw new CartographerException(index, "unable to put the settings. Received http status code = "
-                + settingsResp.status() + ", content = " + settingsResp.content());
+        if (!response.isAcknowledged()) {
+            throw new CartographerException(index, " unable to open the index.");
         }
-
-    }
-
-    private void putMappings(String index, String mappings) throws CartographerException, IOException {
-
-        HttpResponse resp = elasticsearchHttpClient.exchange(request(index + "/_mappings/" + index, PUT, mappings));
-
-        if( resp.status() != 200 ){
-            throw new CartographerException(index, " unable to put the mapping. Received http status code = "
-                + resp.status() + ", content = " + resp.content());
-        }
-
     }
 
     @Override
     public void closeIndex(String index) throws IOException, CartographerException {
-        HttpResponse resp = elasticsearchHttpClient.exchange(request(index + "/_close/", POST, ""));
+        CloseIndexRequest request = new CloseIndexRequest(index);
 
-        if( resp.status() != 200 ){
-            throw new CartographerException(index, " unable to close the index. Received http status code = "
-                + resp.status() + ", content = " + resp.content());
+        AcknowledgedResponse response = restClient.indices().close(request, RequestOptions.DEFAULT);
+
+        if (!response.isAcknowledged()) {
+            throw new CartographerException(index, " unable to open the index.");
+        }
+    }
+
+    private void putSettings(String index, String settings) throws CartographerException, IOException {
+        closeIndex(index);
+
+        UpdateSettingsRequest request = new UpdateSettingsRequest(index).settings(settings, XContentType.JSON);
+        AcknowledgedResponse response = restClient.indices().putSettings(request, RequestOptions.DEFAULT);
+
+        if (!response.isAcknowledged()) {
+            throw new CartographerException(index, " unable to put the settings.");
+        }
+
+        openIndex(index);
+    }
+
+    private void putMappings(String index, String mappings) throws CartographerException, IOException {
+        PutMappingRequest request = new PutMappingRequest(index).source(mappings, XContentType.JSON);
+
+        AcknowledgedResponse response = restClient.indices().putMapping(request, RequestOptions.DEFAULT);
+
+        if (!response.isAcknowledged()) {
+            throw new CartographerException(index, " unable to put the mapping.");
         }
     }
 
     @Override
-    public void openIndex(String index) throws IOException, CartographerException {
-        HttpResponse resp = elasticsearchHttpClient.exchange(request(index + "/_open/", POST, ""));
+    public IndexDefinition updateIndex(Migration migration) throws IOException, CartographerException {
+        MigrationContent migrationJSON = migration.toJson(objectMapper);
 
-        if( resp.status() != 200 ){
-            throw new CartographerException(index, " unable to open the index. Received http status code = "
-                + resp.status() + ", content = " + resp.content());
-        }
+        return updateIndex(migrationJSON.getIndex(), migrationJSON.getSettings(), migrationJSON.getMappings());
     }
 
-    private void createIndex(String index, String content) throws IOException {
+    @Override
+    public IndexDefinition updateIndex(String index, String settings, String mappings) throws IOException, CartographerException {
+        if (!settings.isEmpty()) {
+            putSettings(index, settings);
+        }
 
-        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index ,
-            PUT, content));
+        if (!mappings.isEmpty()) {
+            putMappings(index, mappings);
+        }
 
-        if( resp.status() != 200 ){
-            throw new IOException("Did not successfully createIndex index="+index+". received http status code = "
-                    + resp.status() + ", content = " + resp.content());
+        return this.findOne(index);
+    }
+
+    @Override
+    public IndexDefinition upsertIndex(Migration migration) throws IOException, CartographerException {
+        MigrationContent migrationJSON = migration.toJson(objectMapper);
+
+        return upsertIndex(migrationJSON.getIndex(), migrationJSON.getSettings(), migrationJSON.getMappings());
+    }
+
+    @Override
+    public IndexDefinition upsertIndex(String index, String settings, String mappings) throws CartographerException, IOException {
+        if (!exists(index)) {
+            return createIndex(index, settings, mappings);
+        } else {
+            return updateIndex(index, settings, mappings);
         }
     }
 
     @Override
-    public JsonNode deleteIndex(String index) throws IOException {
-        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index ,
-                DELETE, ""));
+    public IndexDefinition deleteIndex(String index) throws IOException {
+        IndexDefinition definition = findOne(index);
 
-        if( resp.status() != 200 ){
-            throw new IOException("Unable to delete index="+index+". http status code = "
-                    + resp.status() + ", content = " + resp.content());
+        DeleteIndexRequest request = new DeleteIndexRequest(index);
+
+        AcknowledgedResponse response = restClient.indices().delete(request, RequestOptions.DEFAULT);
+
+        if (!response.isAcknowledged()) {
+            throw new IOException("Unable to delete index=" + index);
         }
 
-        return objectMapper.readTree(resp.content());
-    }
-
-    @Override
-    public boolean exists(String index) throws IOException {
-        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/" + index, GET, null));
-        switch(resp.status()){
-            case 200: return true;
-            case 404: return false;
-            default: throw new IOException("Did not successfully detect the existence of index="+index+". received http status code = "
-                    + resp.status() + ", content = " + resp.content());
-        }
-    }
-
-    @Override
-    public JsonNodeIndex findOne(String index) throws IOException {
-        HttpResponse resp = elasticsearchHttpClient.exchange(request(index, GET, null));
-
-        if( resp.status() != 200 ){
-            throw new IOException("Unable to retrieve index="+index+". http status code = "
-                    + resp.status() + ", content = " + resp.content());
-        }
-
-        return new JsonNodeIndex(objectMapper.readTree(resp.content()), index);
-    }
-
-    @Override
-    public List<JsonNodeIndex> list() throws IOException {
-
-        HttpResponse resp = elasticsearchHttpClient.exchange(new HttpRequest(getHost() + "/_cat/indices?format=json",
-            GET, null));
-
-        if( resp.status() != 200 ){
-            throw new IOException("Unable to retrieve list indexes. http status code = "
-                    + resp.status() + ", content = " + resp.content());
-        }
-
-        final JsonNode node = objectMapper.readTree(resp.content());
-
-        final List<JsonNodeIndex> toRet = new ArrayList<>();
-        if(node.isArray()) {
-            final ArrayNode arrayNode = (ArrayNode) node;
-            arrayNode.forEach(element -> toRet.add(new JsonNodeIndex(element, element.get("index").asText())));
-        }
-        return toRet;
-    }
-
-    @Override
-    public JsonNode deleteMapping(String index) throws IOException {
-        HttpResponse resp = elasticsearchHttpClient.exchange(request(index, DELETE, null));
-
-        if( resp.status() != 200 ){
-            throw new IOException("Unable to delete index="+index+" mapping. http status code = "
-                    + resp.status() + ", content = " + resp.content());
-        }
-
-        return objectMapper.readTree(resp.content());
-    }
-
-    private HttpRequest request(String index, HttpMethod method, String content){
-        return new HttpRequest(getHost() + "/" + index,
-                method, content);
-    }
-
-    private String getHost() {
-        String host = cartographerConfiguration.getClusterNodes();
-        if ( !host.startsWith("http") ){
-            host = "http://" + host;
-        }
-        return host;
+        return definition;
     }
 }

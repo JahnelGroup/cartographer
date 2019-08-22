@@ -4,7 +4,6 @@ import com.jahnelgroup.cartographer.core.CartographerException;
 import com.jahnelgroup.cartographer.core.migration.MigrationMetaInfo;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.SortedSet;
 
 public interface CartographerService {
@@ -16,9 +15,9 @@ public interface CartographerService {
     boolean indexExists() throws IOException;
     void deleteIndex() throws IOException;
 
-    void pending(MigrationMetaInfo metaInfa, boolean isRepair) throws IOException, Exception;
-    void success(MigrationMetaInfo metaInfa) throws IOException, Exception;
-    void failed(MigrationMetaInfo metaInfa) throws IOException, Exception;
+    void pending(MigrationMetaInfo metaInfo, boolean isRepair) throws IOException, Exception;
+    void success(MigrationMetaInfo metaInfo) throws IOException, Exception;
+    void failed(MigrationMetaInfo metaInfo) throws IOException, Exception;
 
 
 }

@@ -1,7 +1,6 @@
 {
   "mappings": {
-    "cats": {
-      "properties": {
+    "properties": {
         "id":   { "type": "integer" },
 
         "name": {
@@ -16,6 +15,5 @@
 
         "weight": { "type": "integer" }
       }
-    }
   }
 }

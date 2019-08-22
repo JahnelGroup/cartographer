@@ -1,12 +1,10 @@
 {
   "mappings": {
-    "dogs": {
-      "properties": {
+    "properties": {
         "id":       { "type": "integer" },
         "name":     { "type": "keyword" },
         "type":     { "type": "keyword" },
         "birthday": { "type": "date", "format": "yyyy-MM-dd" }
       }
-    }
   }
 }
