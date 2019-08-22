@@ -2,7 +2,6 @@ package com.jahnelgroup.cartographer.core.migration.file;
 
 import com.jahnelgroup.cartographer.core.migration.MigrationFilename;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 
 public class DefaultMigrationFilenameParser implements MigrationFilenameParser {
 

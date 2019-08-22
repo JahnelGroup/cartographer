@@ -3,10 +3,8 @@ package com.jahnelgroup.cartographer.core.elasticsearch.cartographer;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigurationAware;
 import lombok.Data;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;

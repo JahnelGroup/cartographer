@@ -6,10 +6,6 @@ import com.jahnelgroup.cartographer.core.migration.MigrationFile;
 import lombok.Data;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 @Data
 public class DefaultChecksumProvider implements ChecksumProvider, ConfigurationAware {
 

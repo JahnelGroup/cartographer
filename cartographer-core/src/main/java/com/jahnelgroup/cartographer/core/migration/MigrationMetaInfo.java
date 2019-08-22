@@ -4,8 +4,6 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import java.time.ZonedDateTime;
-
 @Data
 @RequiredArgsConstructor
 public class MigrationMetaInfo {

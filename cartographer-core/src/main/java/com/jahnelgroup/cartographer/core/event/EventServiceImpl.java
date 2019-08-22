@@ -3,7 +3,6 @@ package com.jahnelgroup.cartographer.core.event;
 import com.jahnelgroup.cartographer.core.config.CartographerConfiguration;
 import com.jahnelgroup.cartographer.core.config.ConfigUtils;
 import com.jahnelgroup.cartographer.core.config.ConfigurationAware;
-import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
