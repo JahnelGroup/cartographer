@@ -5,7 +5,7 @@
 
 	<groupId>com.jahnelgroup.cartographer</groupId>
 	<artifactId>cartographer-spring</artifactId>
-	<version>1.0.6</version>
+	<version>1.0.9</version>
 	<packaging>jar</packaging>
 
 	<name>cartographer-spring</name>
@@ -62,6 +62,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<elasticsearch.version>7.1.0</elasticsearch.version>
 	</properties>
 
 	<dependencies>
@@ -74,7 +75,7 @@
 		<dependency>
 			<groupId>com.jahnelgroup.cartographer</groupId>
 			<artifactId>cartographer-core</artifactId>
-			<version>1.0.7</version>
+			<version>${version}</version>
 		</dependency>
 
 		<dependency>
@@ -90,6 +91,21 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.elasticsearch</groupId>
+				<artifactId>elasticsearch</artifactId>
+				<version>${elasticsearch.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.elasticsearch.client</groupId>
+				<artifactId>elasticsearch-rest-high-level-client</artifactId>
+				<version>${elasticsearch.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
 		<plugins>

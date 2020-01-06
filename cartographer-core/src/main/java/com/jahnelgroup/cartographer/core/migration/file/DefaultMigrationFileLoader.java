@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Data
 public class DefaultMigrationFileLoader implements MigrationFileLoader, ConfigurationAware {
@@ -35,7 +36,10 @@ public class DefaultMigrationFileLoader implements MigrationFileLoader, Configur
                     .setScanners(new ResourcesScanner())
         );
 
-        Set<String> filenames = reflections.getResources(Pattern.compile(".*\\.json"));
+        Set<String> filenames = reflections.getResources(Pattern.compile(".*\\.json"))
+            .stream()
+            .filter(fileName -> fileName.contains(cartographerConfiguration.getMigrationLocation()))
+            .collect(Collectors.toSet());
 
         for(String filename: filenames){
             String content = IOUtils.toString(classLoader.getResourceAsStream(filename), Charset.defaultCharset());
